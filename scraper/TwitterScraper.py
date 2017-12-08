@@ -92,6 +92,6 @@ def create_url(user_name, from_date, to_date):
 
     from_string = format_date(from_date)
     to_string = format_date(to_date)
-    url = "https://twitter.com/search?f=tweets&vertical=default&q=from%3A{}%20since%3A{}%20until%3A{" +\
+    url = "https://twitter.com/search?f=tweets&vertical=default&q=from%3A{}%20since%3A{}%20until%3A{" \
           "}include%3Aretweets&src=typd".format(user_name, from_string, to_string)
     return url
