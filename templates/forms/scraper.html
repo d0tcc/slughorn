@@ -1,0 +1,53 @@
+{% extends 'layouts/main.html' %}
+{% block title %}Scrape{% endblock %}
+{% block extensions %}{% endblock %}
+{% block content %}
+    <form id="eventForm" method="post" class="form-horizontal">
+        {{ form.hidden_tag() }}
+
+        <div class="form-group">
+            <h3 class="form-heading">Scraper <a href="{{ url_for('home') }}" title="Back to homepage"><i class="fa fa-home pull-right"></i></a></h3>
+            <p>Please enter a user name and a time frame below:</p>
+        </div>
+
+        <div class="form-group">
+            <label class="col-xs-3 control-label">{{ form.name.label.text }}</label>
+            <div class="col-xs-5">
+                {{ form.name(class_ = 'form-control first-input', placeholder = form.name.label.text, required = true, autofocus = true) }}
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="col-xs-3 control-label">{{ form.all_tweets.label.text }}</label>
+            <div class="col-xs-5">
+                {{ form.all_tweets(class_ = 'checkbox', required = false) }}
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="col-xs-3 control-label">Start date</label>
+            <div class="col-xs-5 dateContainer">
+                <div class="input-group input-append" id="fromDatePicker">
+                    {{ form.from_date(class_ = 'form-control twitter-date-input', placeholder = form.from_date.label.text, required = false) }}
+                </div>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="col-xs-3 control-label">End date</label>
+            <div class="col-xs-5 dateContainer">
+                <div class="input-group input-append" id="toDatePicker">
+                    {{ form.to_date(class_ = 'form-control twitter-date-input', placeholder = form.to_date.label.text, required = false) }}
+                </div>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <div class="col-xs-5 col-xs-offset-3">
+                <button type="submit" class="btn btn-default">{{ form.submit.label.text }}</button>
+            </div>
+        </div>
+    </form>
+    <div class="ldBar label-center" data-preset="bubble" data-value="50"></div>
+
+{% endblock %}

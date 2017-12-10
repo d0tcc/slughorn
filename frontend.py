@@ -1,57 +1,92 @@
-from flask import Flask
-from flask_bootstrap import Bootstrap
-
-from flask import Blueprint, render_template, flash, redirect, url_for
-from flask_bootstrap import __version__ as FLASK_BOOTSTRAP_VERSION
-from flask_nav.elements import Navbar, View, Subgroup, Link, Text, Separator
+from flask import Flask, render_template, flash, redirect, url_for
 from markupsafe import escape
-from flask_wtf.csrf import CSRFProtect
-from nav import nav
 from forms import TwitterScrapeForm
 from config import BaseConfig
+from scraper import TwitterScraper
+import logging
+from logging import Formatter, FileHandler
+
+#----------------------------------------------------------------------------#
+# App Config.
+#----------------------------------------------------------------------------#
 
 app = Flask(__name__)
 app.config.from_object(BaseConfig)
-Bootstrap(app)
-frontend = Blueprint('frontend', __name__)
-app.register_blueprint(frontend)
-nav.init_app(app)
-csrf = CSRFProtect(app)
 
 
-# We're adding a navbar as well through flask-navbar. In our example, the
-# navbar has an usual amount of Link-Elements, more commonly you will have a
-# lot more View instances.
-nav.register_element('frontend_top', Navbar(
-    View('Slughorn', '.index'),
-    View('Twitter', '.twitter')))
+#----------------------------------------------------------------------------#
+# Controllers.
+#----------------------------------------------------------------------------#
 
-
-# Our index-page just shows a quick explanation. Check out the template
-# "templates/index.html" documentation for more details.
 @app.route('/')
-def index():
-    return render_template('index.html')
+def home():
+    return render_template('pages/placeholder.home.html')
 
 
-@app.route('/twitter')
-def twitter():
+@app.route('/about')
+def about():
+    return render_template('pages/placeholder.about.html')
+
+
+@app.route('/scraper', methods=['GET', 'POST'])
+def scraper():
     form = TwitterScrapeForm()
 
     if form.validate_on_submit():
-        # We don't have anything fancy in our application, so we are just
-        # flashing a message when a user completes the form successfully.
-        #
-        # Note that the default flashed messages rendering allows HTML, so
-        # we need to escape things if we input user values:
-        flash('Scraping for {} in progress ...'
+
+        try:
+            from_date = form.from_date.data
+        except ValueError:
+            flash('Date {} not valid'
+                  .format(escape(form.from_date.data)))
+            return render_template('forms/scraper.html', form=form)
+        try:
+            to_date = form.to_date.data
+        except ValueError:
+            flash('Date {} not valid'
+                  .format(escape(form.to_date.data)))
+            return render_template('forms/scraper.html', form=form)
+
+        flash('Scraping tweets for user @{} in progress ...'
               .format(escape(form.name.data)))
 
-        # In a real application, you may wish to avoid this tedious redirect.
-        return redirect(url_for('.twitter'))
+        scrape_all_tweets = bool(form.all_tweets.data)
+        scraper = TwitterScraper.TwitterScraper(form.name.data)
+        if scrape_all_tweets:
+            number_of_found_tweets = scraper.scrape_all()
+        else:
+            number_of_found_tweets = scraper.scrape_timeframe(from_date, to_date)
+        flash("Successfully scraped {} new tweets!".format(number_of_found_tweets))
 
-    return render_template('twitter.html', form=form)
+        return render_template('forms/scraper.html', form=form)
 
+    return render_template('forms/scraper.html', form=form)
+
+
+#----------------------------------------------------------------------------#
+# Error handlers.
+#----------------------------------------------------------------------------#
+
+@app.errorhandler(500)
+def internal_error(error):
+    #db_session.rollback()
+    return render_template('errors/500.html'), 500
+
+
+@app.errorhandler(404)
+def not_found_error(error):
+    return render_template('errors/404.html'), 404
+
+
+if not app.debug:
+    file_handler = FileHandler('error.log')
+    file_handler.setFormatter(
+        Formatter('%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]')
+    )
+    app.logger.setLevel(logging.INFO)
+    file_handler.setLevel(logging.INFO)
+    app.logger.addHandler(file_handler)
+    app.logger.info('errors')
 
 if __name__ == '__main__':
     app.run()

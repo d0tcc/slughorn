@@ -9,9 +9,6 @@ import logging
 logging.basicConfig(format='%(asctime)s [%(levelname)-5.5s]  %(message)s', level=logging.INFO)
 log = logging.getLogger(__name__)
 
-options = webdriver.ChromeOptions()
-options.add_argument('headless')
-driver = webdriver.Chrome("/usr/local/bin/chromedriver", chrome_options=options)
 
 tweet_selector = "div.js-tweet-text-container"
 
@@ -23,6 +20,10 @@ class TwitterScraper:
         self.join_date = self.find_join_date()
         self.tweets = []
 
+        options = webdriver.ChromeOptions()
+        options.add_argument('headless')
+        self.driver = webdriver.Chrome("/usr/local/bin/chromedriver", chrome_options=options)
+
     def scrape_all(self):
         today = datetime.now()
         return self.scrape_timeframe(self.join_date, today)
@@ -30,21 +31,24 @@ class TwitterScraper:
     def scrape_timeframe(self, from_date, to_date):
 
         def scroll_down_and_count_tweets(delay):
-            driver.execute_script('window.scrollTo(0, document.body.scrollHeight);')
+            self.driver.execute_script('window.scrollTo(0, document.body.scrollHeight);')
             sleep(delay)
-            return driver.find_elements_by_css_selector(tweet_selector)
+            return self.driver.find_elements_by_css_selector(tweet_selector)
 
+        period = (to_date - from_date).days + 1
+        period = min(period, 7)
+        number_of_found_tweets = 0
         timeframe_end_date = to_date + timedelta(days=1)
         week_start_date = from_date
-        week_end_date = from_date + timedelta(days=7)
+        week_end_date = from_date + timedelta(days=period)
 
         while week_end_date <= timeframe_end_date and week_start_date < timeframe_end_date:
             log.info("\n\n")
             log.info("Checking tweets in week {} - {}".format(week_start_date.strftime('%Y-%m-%d'),
                                                               week_end_date.strftime('%Y-%m-%d')))
             url = create_url(self.user_name, week_start_date, week_end_date)
-            driver.get(url)
-            found_tweet_divs = driver.find_elements_by_css_selector(tweet_selector)
+            self.driver.get(url)
+            found_tweet_divs = self.driver.find_elements_by_css_selector(tweet_selector)
             increment = 20
             log.info("Found tweets: {}, Increment: {}".format(len(found_tweet_divs), increment))
 
@@ -59,6 +63,7 @@ class TwitterScraper:
                     tweet = tweet_div.find_element_by_class_name('tweet-text').text
                     log.info("--- Tweet: {}".format(tweet))
                     self.tweets.append(tweet)
+                    number_of_found_tweets = number_of_found_tweets + 1
                 except NoSuchElementException:
                     log.error("Element 'tweet-text' not found in div.")
 
@@ -69,6 +74,9 @@ class TwitterScraper:
             week_end_date = week_end_date + timedelta(days=7)
             if week_end_date > timeframe_end_date:
                 week_end_date = timeframe_end_date
+
+        self.driver.close()
+        return number_of_found_tweets
 
     def find_join_date(self):
 
