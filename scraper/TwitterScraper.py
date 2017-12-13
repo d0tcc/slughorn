@@ -1,21 +1,23 @@
+import math
 from selenium import webdriver
 from selenium.common.exceptions import NoSuchElementException
 from time import sleep
 from datetime import datetime, timedelta
 import requests
 from bs4 import BeautifulSoup
-
+import redis
 import logging
 logging.basicConfig(format='%(asctime)s [%(levelname)-5.5s]  %(message)s', level=logging.INFO)
 log = logging.getLogger(__name__)
 
-
 tweet_selector = "div.js-tweet-text-container"
 
+r = redis.StrictRedis(host='localhost', port=6379, db=0)
 
 class TwitterScraper:
 
-    def __init__(self, user_name):
+    def __init__(self, user_name, case_number):
+        self.case_number = case_number
         self.user_name = user_name
         self.join_date = self.find_join_date()
         self.tweets = []
@@ -36,7 +38,13 @@ class TwitterScraper:
             return self.driver.find_elements_by_css_selector(tweet_selector)
 
         period = (to_date - from_date).days + 1
+        log.info("Period: {}".format(period))
+        weeks_total = int(math.ceil(period / 7))
         period = min(period, 7)
+        weeks_done = 0
+        log.info("Initialize status: {}/{}".format(weeks_done, weeks_total))
+        r.set("{}_twitter_weeks_total".format(self.case_number), weeks_total)
+        r.set("{}_twitter_weeks_done".format(self.case_number), weeks_done)
         number_of_found_tweets = 0
         timeframe_end_date = to_date + timedelta(days=1)
         week_start_date = from_date
@@ -74,6 +82,8 @@ class TwitterScraper:
             week_end_date = week_end_date + timedelta(days=7)
             if week_end_date > timeframe_end_date:
                 week_end_date = timeframe_end_date
+            weeks_done = weeks_done + 1
+            r.set("{}_twitter_weeks_done".format(self.case_number), weeks_done)
 
         self.driver.close()
         return number_of_found_tweets

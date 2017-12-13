@@ -1,0 +1,25 @@
+{% extends 'layouts/main.html' %}
+{% block title %}Home{% endblock %}
+{% block content %}
+<script>
+window.onload = function start() {
+    slide();
+}
+function slide() {
+    window.setInterval(function () {
+        $.get('/status', function(data) {
+            $('#ldBar').html(data);
+        });
+    }, 1000);
+}
+</script>
+
+<div class="page-header">
+  <h1>Status</h1>
+</div>
+<p class="lead">Case {{ case_number }} created!</p>
+
+<div class="ldBar label-center" data-preset="bubble" data-value="{{ twitter_status }}"></div>
+
+{% endblock %}
+

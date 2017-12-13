@@ -1,10 +1,14 @@
-from flask import Flask, render_template, flash, redirect, url_for
+import redis
+import threading
+from flask import Flask, render_template, flash, request, redirect, url_for, make_response
 from markupsafe import escape
 from forms import TwitterScrapeForm
 from config import BaseConfig
 from scraper import TwitterScraper
 import logging
 from logging import Formatter, FileHandler
+
+r = redis.StrictRedis(host='localhost', port=6379, db=0)
 
 #----------------------------------------------------------------------------#
 # App Config.
@@ -51,17 +55,38 @@ def scraper():
               .format(escape(form.name.data)))
 
         scrape_all_tweets = bool(form.all_tweets.data)
-        scraper = TwitterScraper.TwitterScraper(form.name.data)
+        case_number = form.case_number.data
+        scraper = TwitterScraper.TwitterScraper(form.name.data, case_number)
         if scrape_all_tweets:
-            number_of_found_tweets = scraper.scrape_all()
+            scrape_thread = threading.Thread(target=scraper.scrape_all)
         else:
-            number_of_found_tweets = scraper.scrape_timeframe(from_date, to_date)
-        flash("Successfully scraped {} new tweets!".format(number_of_found_tweets))
+            scrape_thread = threading.Thread(target=scraper.scrape_timeframe, args=[from_date, to_date])
+        scrape_thread.start()
 
-        return render_template('forms/scraper.html', form=form)
+        response = make_response(redirect("/status"))
+        response.set_cookie('case_number', case_number)
+        return response
 
     return render_template('forms/scraper.html', form=form)
 
+def get_twitter_status(case_number):
+    twitter_weeks_total = int(r.get("{}_twitter_weeks_total".format(case_number)))
+    twitter_weeks_done = int(r.get("{}_twitter_weeks_done".format(case_number)))
+    print("Status: ", str(twitter_weeks_done), "/", str(twitter_weeks_total))
+    if twitter_weeks_total == 0:
+        percentage = 0.0
+    else:
+        percentage = (twitter_weeks_done / twitter_weeks_total) * 100
+    print("Percentage: ", str(percentage))
+    return percentage
+
+@app.route("/status")
+def status():
+    case_number = request.cookies.get('case_number')
+    twitter_status = get_twitter_status(case_number)
+    return render_template('pages/status.html',
+                           case_number=case_number,
+                           twitter_status=twitter_status)
 
 #----------------------------------------------------------------------------#
 # Error handlers.

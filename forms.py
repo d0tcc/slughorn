@@ -5,6 +5,7 @@ from wtforms import validators
 
 
 class TwitterScrapeForm(FlaskForm):
+    case_number = StringField(u'Case Number', [validators.required()])
     name = StringField(u'User Name', [validators.required()])
     from_date = DateField(u'From')
     to_date = DateField(u'To')
