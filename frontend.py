@@ -69,24 +69,27 @@ def scraper():
 
     return render_template('forms/scraper.html', form=form)
 
-def get_twitter_status(case_number):
+
+@app.route("/progressbar/<case_number>")
+def progressbar(case_number):
     twitter_weeks_total = int(r.get("{}_twitter_weeks_total".format(case_number)))
     twitter_weeks_done = int(r.get("{}_twitter_weeks_done".format(case_number)))
-    print("Status: ", str(twitter_weeks_done), "/", str(twitter_weeks_total))
     if twitter_weeks_total == 0:
         percentage = 0.0
     else:
         percentage = (twitter_weeks_done / twitter_weeks_total) * 100
-    print("Percentage: ", str(percentage))
-    return percentage
+    print("PERCENTAGE: ", percentage)
+    return render_template('pages/progress_bar.html', percentage=percentage)
+
 
 @app.route("/status")
 def status():
     case_number = request.cookies.get('case_number')
-    twitter_status = get_twitter_status(case_number)
+    #twitter_status = get_twitter_status(case_number)
     return render_template('pages/status.html',
-                           case_number=case_number,
-                           twitter_status=twitter_status)
+                           case_number=case_number)
+                           #twitter_status=twitter_status)
+
 
 #----------------------------------------------------------------------------#
 # Error handlers.
