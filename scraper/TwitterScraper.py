@@ -17,8 +17,8 @@ r = redis.StrictRedis(host='localhost', port=6379, db=0)
 class TwitterScraper:
 
     def __init__(self, user_name, case_number):
-        self.case_number = case_number
         self.user_name = user_name
+        self.case_number = case_number
         self.join_date = self.find_join_date()
         self.tweets = []
 
