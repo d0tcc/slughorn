@@ -1,7 +1,12 @@
 from scraper.TwitterScraper import TwitterScraper
 from datetime import datetime
 import locale
-locale.setlocale(locale.LC_ALL, 'en_US')
+import sys
+
+if "linux" in sys.platform:
+    locale.setlocale(locale.LC_ALL, 'en_US.utf-8')
+else:
+    locale.setlocale(locale.LC_ALL, 'en_US')
 
 twitter_name = "realdonaldtrump"
 twitter_scraper = TwitterScraper(twitter_name)
