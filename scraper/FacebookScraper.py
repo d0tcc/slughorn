@@ -35,17 +35,31 @@ class FacebookScraper:
 
     def scrape_timeframe(self, from_date, to_date):
 
+        more_to_come = True
+        found_posts = []
         graph = facebook.GraphAPI(
             access_token=facebook_access_token,
             version="2.5")
 
-        url = create_url(self.numeric_id, from_date, to_date)
-        site = graph.request(url)
+        while more_to_come:
+            url = create_url(self.numeric_id, from_date, to_date)
+            site = graph.request(url)
 
-        posts_data = site['data']
-        posts = [post.get('message', post.get('story', '')) for post in posts_data]
-        self.posts = posts
-        return len(posts)
+            posts_data = site['data']
+            print(posts_data)
+            posts = [(post.get('message', post.get('story', '')), post.get('created_time')) for post in posts_data]
+            found_posts.extend(posts)
+            if len(posts) < 100:
+                more_to_come = False
+            else:
+                raw_last_date = posts[-1][1]
+                print("REACHED 100 at", raw_last_date)
+                last_date = datetime.strptime(raw_last_date, '%Y-%m-%dT%H:%M:%S+%f')
+                to_date = last_date
+
+
+        self.posts.extend(found_posts)
+        return len(found_posts)
 
     def find_numeric_id(self):
 
