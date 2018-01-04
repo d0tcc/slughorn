@@ -12,6 +12,7 @@ log = logging.getLogger(__name__)
 
 r = redis.StrictRedis(host='localhost', port=6379, db=0)
 
+
 class FacebookScraper:
 
     def __init__(self, user_name, case_number, numeric_id=None):
@@ -26,11 +27,11 @@ class FacebookScraper:
         self.posts = []
 
     def scrape_all(self):
-
-        pass
+        today = datetime.now()
+        first_day_of_facebook = datetime(2004, 2, 1)
+        return self.scrape_timeframe(first_day_of_facebook, today)
 
     def scrape_timeframe(self, from_date, to_date):
-
         more_to_come = True
         found_posts = []
         graph = facebook.GraphAPI(
@@ -59,7 +60,6 @@ class FacebookScraper:
         return len(found_posts)
 
     def find_numeric_id(self):
-
         url = 'https://www.facebook.com/' + self.user_name
         http_pool = urllib3.connection_from_url(url)
         r = http_pool.urlopen('GET', url)
@@ -74,12 +74,10 @@ class FacebookScraper:
 
 
 def format_date(date):
-
     return date.strftime('%Y-%m-%d')
 
 
 def create_url(numeric_id, from_date, to_date):
-
     from_string = format_date(from_date)
     to_string = format_date(to_date)
     url = "/{}/posts?limit=100&since={}&until={}".format(numeric_id, from_string, to_string)
