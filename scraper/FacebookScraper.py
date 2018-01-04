@@ -25,10 +25,6 @@ class FacebookScraper:
 
         self.posts = []
 
-        # options = webdriver.ChromeOptions()
-        # options.add_argument('headless')
-        # self.driver = webdriver.Chrome("/usr/local/bin/chromedriver", chrome_options=options)
-
     def scrape_all(self):
 
         pass
@@ -47,16 +43,17 @@ class FacebookScraper:
 
             posts_data = site['data']
             print(posts_data)
-            posts = [(post.get('message', post.get('story', '')), post.get('created_time')) for post in posts_data]
-            found_posts.extend(posts)
-            if len(posts) < 100:
+            posts_with_time = [(post.get('message', post.get('story', '')), post.get('created_time')) for post in posts_data]
+            if len(posts_with_time) < 100:
                 more_to_come = False
+                posts = [post[0] for post in posts_with_time]
             else:
-                raw_last_date = posts[-1][1]
+                raw_last_date = posts_with_time[-1][1]
                 print("REACHED 100 at", raw_last_date)
-                last_date = datetime.strptime(raw_last_date, '%Y-%m-%dT%H:%M:%S+%f')
-                to_date = last_date
-
+                last_date = datetime.strptime(raw_last_date, '%Y-%m-%dT%H:%M:%S+%f').date()
+                to_date = last_date + timedelta(days=1)  # to_date is not included in the search, +1 to include it
+                posts = [post[0] for post in posts_with_time if not datetime.strptime(post[1], '%Y-%m-%dT%H:%M:%S+%f').date() == last_date]  # remove days from the current day because they will be included in the next search step
+            found_posts.extend(posts)
 
         self.posts.extend(found_posts)
         return len(found_posts)

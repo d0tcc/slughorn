@@ -13,7 +13,7 @@ else:
 # twitter_scraper = TwitterScraper(twitter_name)
 #
 from_date = datetime(2016, 1, 27)
-to_date = datetime(2017, 11, 30)
+to_date = datetime(2017, 12, 1)
 #
 # # twitter_scraper.scrape_all()
 # twitter_scraper.scrape_timeframe(from_date, to_date)
@@ -23,6 +23,7 @@ to_date = datetime(2017, 11, 30)
 facebook_name = 'arminwolf.journalist'
 facebook_scraper = FacebookScraper(facebook_name, 1234, numeric_id=360686647276544)
 facebook_scraper.scrape_timeframe(from_date, to_date)
+
 print("Size:", len(facebook_scraper.posts))
 for post in facebook_scraper.posts:
     print(post)
