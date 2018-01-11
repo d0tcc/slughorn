@@ -2,15 +2,19 @@ import facebook
 from datetime import datetime, timedelta
 import redis
 import logging
-import requests
-from bs4 import BeautifulSoup
-import urllib3
 import re
-from scraper.constants import facebook_access_token
+from scraper import util
+from scraper.constants import facebook_access_token, facebook_password, facebook_email
+from selenium import webdriver
+import pickle
+
 logging.basicConfig(format='%(asctime)s [%(levelname)-5.5s]  %(message)s', level=logging.INFO)
 log = logging.getLogger(__name__)
 
 r = redis.StrictRedis(host='localhost', port=6379, db=0)
+graph = facebook.GraphAPI(
+            access_token=facebook_access_token,
+            version="2.5")
 
 
 class FacebookScraper:
@@ -18,6 +22,7 @@ class FacebookScraper:
     def __init__(self, user_name, case_number, numeric_id=None):
         self.user_name = user_name
         self.case_number = case_number
+        self.is_public_page = self.check_for_public_page()
 
         if not numeric_id:
             self.numeric_id = self.find_numeric_id()
@@ -34,9 +39,6 @@ class FacebookScraper:
     def scrape_timeframe(self, from_date, to_date):
         more_to_come = True
         found_posts = []
-        graph = facebook.GraphAPI(
-            access_token=facebook_access_token,
-            version="2.5")
 
         while more_to_come:
             url = create_url(self.numeric_id, from_date, to_date)
@@ -60,17 +62,34 @@ class FacebookScraper:
         return len(found_posts)
 
     def find_numeric_id(self):
-        url = 'https://www.facebook.com/' + self.user_name
-        http_pool = urllib3.connection_from_url(url)
-        r = http_pool.urlopen('GET', url)
-        html = r.data.decode('utf-8')
-        try:
-            match = re.search(r"profile_id=(\d*)", html)
-            numeric_id = match.group(1)
+        if self.is_public_page:
+            url = "/{}".format(self.user_name)
+            site = graph.request(url)
+            numeric_id = site.get('id', 0)
             return numeric_id
-        except (AttributeError, TypeError, KeyError, ValueError):
-            log.error("Numeric ID not found, returning 0")
-            return 0
+        else:
+            driver = webdriver.PhantomJS()
+            url = 'https://www.facebook.com/' + self.user_name
+            util.login_facebook(facebook_email, facebook_password)
+            for cookie in pickle.load(open("FacebookCookies.pkl", "rb")):
+                driver.add_cookie(cookie)
+            driver.get(url)
+            source = driver.page_source
+            try:
+                match = re.search(r"profile_id=(\d*)", source)
+                numeric_id = match.group(1)
+                return numeric_id
+            except (AttributeError, TypeError, KeyError, ValueError):
+                log.error("Numeric ID not found, returning 0")
+                return 0
+
+    def check_for_public_page(self):
+        try:
+            url = "/{}".format(self.user_name)
+            graph.request(url)
+        except facebook.GraphAPIError:
+            return False
+        return True
 
 
 def format_date(date):

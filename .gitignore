@@ -9,3 +9,5 @@ out
 gen
 
 constants.py
+*.pkl
+ghostdriver.log
