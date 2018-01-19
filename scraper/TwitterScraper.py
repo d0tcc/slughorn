@@ -7,6 +7,7 @@ import requests
 from bs4 import BeautifulSoup
 import redis
 import logging
+from scraper import util
 logging.basicConfig(format='%(asctime)s [%(levelname)-5.5s]  %(message)s', level=logging.INFO)
 log = logging.getLogger(__name__)
 
@@ -15,8 +16,25 @@ tweet_selector = "div.js-tweet-text-container"
 r = redis.StrictRedis(host='localhost', port=6379, db=0)
 
 class TwitterScraper:
+    """
+    A TwitterScraper object represents one attempt to retrieve tweets of a user.
+    """
 
     def __init__(self, user_name, case_number):
+        """
+        Init function of the TwitterScraper object.
+
+        Initializes a TwitterScraper object, containing a given user_name and case_number.
+        Based on the user_name the join_date is being retrieved with the method find_join_date().
+        Furthermore an empty list of tweets and the webdriver is initialized.
+
+        Parameters
+        ----------
+        user_name: str
+            User name of the owner of the Twitter profile
+        case_number: str
+            String representation of the case number
+        """
         self.user_name = user_name
         self.case_number = case_number
         self.join_date = self.find_join_date()
@@ -27,11 +45,42 @@ class TwitterScraper:
         self.driver = webdriver.Chrome("/usr/local/bin/chromedriver", chrome_options=options)
 
     def scrape_all(self):
+        """
+        Scrape all tweets.
+    
+        Scrape all tweets of the user which name is provided in self.user_name and saves them in self.tweets. Calls 
+        self.scrape_timeframe with the users join date and today's date.
+    
+        Returns
+        -------
+        int
+            Number of scraped tweets
+    
+        """
         today = datetime.now()
         return self.scrape_timeframe(self.join_date, today)
 
     def scrape_timeframe(self, from_date, to_date):
+        """
+        Scrape specific time frame.
 
+        Scrape all tweets of the user which name is provided in self.user_name in a given time frame and saves them 
+        in self.tweets.
+        Tweets are scraped in blocks of one week. By scrolling down new tweets are dynamically loaded through 
+        JavaScript.
+
+        Parameters
+        ----------
+        from_date : datetime
+            start date of time frame (tweets from this day are included)
+        to_date : datetime
+            end date of time frame (tweets from this day are included)
+
+        Returns
+        -------
+        int
+            Number of scraped tweets
+        """
         def scroll_down_and_count_tweets(delay):
             self.driver.execute_script('window.scrollTo(0, document.body.scrollHeight);')
             sleep(delay)
@@ -54,7 +103,7 @@ class TwitterScraper:
             log.info("\n\n")
             log.info("Checking tweets in week {} - {}".format(week_start_date.strftime('%Y-%m-%d'),
                                                               week_end_date.strftime('%Y-%m-%d')))
-            url = create_url(self.user_name, week_start_date, week_end_date)
+            url = util.create_twitter_url(self.user_name, week_start_date, week_end_date)
             self.driver.get(url)
             found_tweet_divs = self.driver.find_elements_by_css_selector(tweet_selector)
             increment = 20
@@ -89,7 +138,17 @@ class TwitterScraper:
         return number_of_found_tweets
 
     def find_join_date(self):
+        """
+        Get the date the user joined Twitter.
 
+        Scrape the join date of the user from the user's profile header card.
+        If no join date can be found the day of the first tweet (21st of March 2006) is returned.
+
+        Returns
+        -------
+        datetime
+            Join date of user or 21st of March 2006 if no date could be found
+        """
         url = 'https://twitter.com/' + self.user_name
         r = requests.get(url, headers={"Accept-Language": "en-US"})
         soup = BeautifulSoup(r.content, "html.parser")
@@ -99,17 +158,3 @@ class TwitterScraper:
         except (TypeError, KeyError, ValueError):
             log.error("Join date not found, returning date of first tweet ever!")
             return datetime(2006, 3, 21)
-
-
-def format_date(date):
-
-    return date.strftime('%Y-%m-%d')
-
-
-def create_url(user_name, from_date, to_date):
-
-    from_string = format_date(from_date)
-    to_string = format_date(to_date)
-    url = "https://twitter.com/search?f=tweets&vertical=default&q=from%3A{}%20since%3A{}%20until%3A{" \
-          "}include%3Aretweets&src=typd".format(user_name, from_string, to_string)
-    return url
