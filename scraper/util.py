@@ -1,9 +1,6 @@
 import pickle
-from selenium import webdriver
 
-driver = webdriver.PhantomJS()
-
-def login_facebook(email, password):
+def login_facebook(driver, email, password):
     url = 'https://www.facebook.com'
     driver.get(url)
     emailelement = driver.find_element_by_name('email')
@@ -14,3 +11,6 @@ def login_facebook(email, password):
     loginelement = driver.find_element_by_xpath(loginButtonXPath)
     loginelement.submit()
     pickle.dump(driver.get_cookies() , open("FacebookCookies.pkl","wb"))
+    # for cookie in pickle.load(open("FacebookCookies.pkl", "rb")):
+    #     driver.add_cookie(cookie)
+    # return driver
