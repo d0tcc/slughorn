@@ -18,3 +18,5 @@ data/twitter/*.txt
 logs/logfile.log
 
 *.rdb
+
+slughorn.egg-info

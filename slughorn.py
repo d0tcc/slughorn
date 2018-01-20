@@ -8,6 +8,49 @@ logging.config.fileConfig('logs/logging.conf')
 log = logging.getLogger(__name__)
 
 
+ascii_slug = """
+                                                           
+                  /|                                        
+                 |_|                                       
+                 / |                                       
+           -.-.  | |   -.-.                                
+          -    ` |_|  -    `                                
+          -  o / | |  - o  /                                
+           `::´  | |   `::´                                
+            ::  |__|    ::                                  
+           .::-./``/....::....                            
+        .-.`    /  |          `.                             
+       :`                     :                             
+      -.                       :                            
+      /                        /                            
+      :                        :                            
+     -.                        ..                           
+     :                 `       `:                           
+     /                 .`       :                           
+     /               .--        /                           
+     /    /       ./ymN.         /                           
+     :   /...----/MMMMd         :                           
+     /       MMMMMMMMMM+        /                           
+     :       MMMMMMMMMMd        /                           
+     :       MMMM:::::dM        /                           
+     `       /MN.......         :                           
+     -        `                `/......_,                  
+     .                          .        |              
+`--`-.                          `        |                
+/                                     ___...............   
+`                                                       `.-
+ `..`....................................................-`
+      _             _                      
+       | |           | |                     
+    ___| |_   _  __ _| |__   ___  _ __ _ __  
+   / __| | | | |/ _` | '_ \ / _ \| '__| '_ \ 
+   \__ \ | |_| | (_| | | | | (_) | |  | | | |
+   |___/_|\__,_|\__, |_| |_|\___/|_|  |_| |_|
+                 __/ |                       
+                |___/                        
+"""
+
+
 def check_for_constants():
     constants_path = 'scraper/constants.py'
     if not os.path.isfile(constants_path):
@@ -42,6 +85,7 @@ def start_twitter_scraper(user_name, output):
 @click.option('-t', '--twitter', default='', help="Target's Twitter user name without leading @")
 @click.option('-o', '--output', default='', help="Path to output directory")
 def cli(facebook, twitter, output):
+    click.echo(ascii_slug)
     if facebook:
         click.echo("Starting Facebook scraping for user '{}'".format(facebook))
         start_facebook_scraper(facebook, output)
