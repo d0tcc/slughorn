@@ -1,18 +1,11 @@
-import math
-from selenium import webdriver
-from selenium.common.exceptions import NoSuchElementException
-from time import sleep
 from datetime import datetime, timedelta
 import requests
 from bs4 import BeautifulSoup
-#import redis
 import os
-import logging, logging.config
-from scraper import util
 import click_spinner
-log = logging.getLogger('slughorn')
+from scraper.webdriver.TwitterWebdriver import *
 
-tweet_selector = "div.js-tweet-text-container"
+log = logging.getLogger('slughorn')
 
 #r = redis.StrictRedis(host='localhost', port=6379, db=0)
 
@@ -43,7 +36,6 @@ class TwitterScraper:
 
         options = webdriver.ChromeOptions()
         options.add_argument('headless')
-        self.driver = webdriver.Chrome("/usr/local/bin/chromedriver", chrome_options=options)
 
     def scrape_all(self):
         """
@@ -68,14 +60,13 @@ class TwitterScraper:
 
         Scrape all tweets of the user which name is provided in self.user_name in a given time frame and saves them 
         in self.tweets.
-        Tweets are scraped in blocks of one week. By scrolling down new tweets are dynamically loaded through 
-        JavaScript.
+        Uses TwitterWebdriver to retrieve the tweets.
 
         Parameters
         ----------
-        from_date : datetime
+        from_date: datetime
             start date of time frame (tweets from this day are included)
-        to_date : datetime
+        to_date: datetime
             end date of time frame (tweets from this day are included)
 
         Returns
@@ -83,59 +74,11 @@ class TwitterScraper:
         int
             Number of scraped tweets
         """
-        def scroll_down_and_count_tweets(delay):
-            self.driver.execute_script('window.scrollTo(0, document.body.scrollHeight);')
-            sleep(delay)
-            return self.driver.find_elements_by_css_selector(tweet_selector)
-
-        period = (to_date - from_date).days + 1
-        log.debug("Time Period: {}".format(period))
-        weeks_total = int(math.ceil(period / 7))
-        period = min(period, 7)
-        weeks_done = 0
-        #log.debug("Initialize status: {}/{}".format(weeks_done, weeks_total))
-        #r.set("{}_twitter_weeks_total".format(self.case_number), weeks_total)
-        #r.set("{}_twitter_weeks_done".format(self.case_number), weeks_done)
-        number_of_found_tweets = 0
-        timeframe_end_date = to_date + timedelta(days=1)
-        week_start_date = from_date
-        week_end_date = from_date + timedelta(days=period)
-
-        while week_end_date <= timeframe_end_date and week_start_date < timeframe_end_date:
-            log.debug("Checking tweets for user {} in week {} - {}".format(self.user_name, week_start_date.strftime('%Y-%m-%d'),
-                                                              week_end_date.strftime('%Y-%m-%d')))
-            url = util.create_twitter_url(self.user_name, week_start_date, week_end_date)
-            self.driver.get(url)
-            found_tweet_divs = self.driver.find_elements_by_css_selector(tweet_selector)
-            increment = 20
-            log.debug("Found tweets: {}, Increment: {}".format(len(found_tweet_divs), increment))
-
-            while len(found_tweet_divs) >= increment:
-                log.debug('Scrolling down to load more tweets')
-                found_tweet_divs = scroll_down_and_count_tweets(1)
-                log.debug("Found more tweets: {}, Increment: {}".format(len(found_tweet_divs), increment))
-                increment += 20
-
-            for tweet_div in found_tweet_divs:
-                try:
-                    tweet = tweet_div.find_element_by_class_name('tweet-text').text
-                    log.debug("--- Tweet: {}".format(tweet))
-                    self.tweets.append(tweet)
-                    number_of_found_tweets = number_of_found_tweets + 1
-                except NoSuchElementException:
-                    log.error("Element 'tweet-text' not found in div.")
-
-            log.debug("{} Tweets found in this week. {} total".format(len(found_tweet_divs), len(self.tweets)))
-            week_start_date = week_start_date + timedelta(days=7)
-            week_end_date = week_end_date + timedelta(days=7)
-            if week_end_date > timeframe_end_date:
-                week_end_date = timeframe_end_date
-            weeks_done = weeks_done + 1
-            #r.set("{}_twitter_weeks_done".format(self.case_number), weeks_done)
-
-        self.driver.close()
-        print("Finished scraping Tweets for user '{}'".format(self.user_name))
-        return number_of_found_tweets
+        twitter_webdriver = TwitterWebdriver('/usr/local/bin/chromedriver')
+        twitter_webdriver.set_page_load_timeout(10)
+        found_tweets = twitter_webdriver.get_tweets_from_profile(self.user_name, from_date, to_date)
+        self.tweets = found_tweets
+        twitter_webdriver.close()
 
     def find_join_date(self):
         """
@@ -160,6 +103,14 @@ class TwitterScraper:
             return datetime(2006, 3, 21)
 
     def write_to_file(self, directory=''):
+        """
+        Writes scraped data to a file.
+
+        Parameters
+        ----------
+        directory: str
+            Optional directory where the file will be located
+        """
         if not directory:
             directory = 'data/twitter/'
 

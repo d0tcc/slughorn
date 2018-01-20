@@ -1,12 +1,9 @@
-import logging
 from datetime import datetime, timedelta
-
 import click_spinner
 import facebook
 import os
-import re
 import redis
-from FacebookWebBot import *
+from scraper.webdriver.FacebookWebdriver import *
 from scraper import util
 
 log = logging.getLogger('slughorn')
@@ -47,7 +44,7 @@ class FacebookScraper:
         self.driver = webdriver.PhantomJS('/usr/local/bin/phantomjs')
 
         if not numeric_id and self.is_public_page:
-            self.numeric_id = self.find_numeric_id()
+            self.numeric_id = self.get_numeric_id()
         else:
             self.numeric_id = numeric_id
 
@@ -77,6 +74,7 @@ class FacebookScraper:
         Scrape all Facebook posts of the user which name is provided in self.user_name in a given time frame and saves 
         them in self.posts.
         Time frame scraping is only available if the user has a public page. Otherwise all posts are scraped.
+        Uses Facebook's Graph API if user name belongs to a public site. Otherwise it uses the FacebookWebdriver.
 
         Parameters
         ----------
@@ -119,19 +117,18 @@ class FacebookScraper:
 
         else:
             from scraper.constants import constants
-            bot = FacebookBot('/usr/local/bin/chromedriver')
-            bot.set_page_load_timeout(10)
-            bot.login(constants['facebook_email'], constants['facebook_password'])
-            all_posts = bot.getPostInProfile('https://mbasic.facebook.com/{}'.format(self.user_name),
-                                             moreText="Mehr anzeigen") #  moreText must be adapted to language settings
+            facebook_webdriver = FacebookWebdriver('/usr/local/bin/chromedriver')
+            facebook_webdriver.set_page_load_timeout(10)
+            facebook_webdriver.login(constants['facebook_email'], constants['facebook_password'])
+            all_posts = facebook_webdriver.get_posts_from_profile(self.user_name, moreText="Mehr anzeigen") #  moreText must be adapted to language settings
                                                                        #  of scraping profile
             self.posts = all_posts
-            self.driver.close()
+            facebook_webdriver.close()
 
         print("Finished scraping Facebook posts for user '{}'".format(self.user_name))
 
 
-    def find_numeric_id(self):
+    def get_numeric_id(self):
         """
         Find numeric ID of the user's public profile.
 
@@ -150,17 +147,12 @@ class FacebookScraper:
             return numeric_id
         else:
             from scraper.constants import constants
-            url = 'https://www.facebook.com/' + self.user_name
-            util.login_facebook(self.driver, constants['facebook_email'], constants['facebook_password'])
-            self.driver.get(url)
-            source = self.driver.page_source
-            try:
-                match = re.search(r"profile_id=(\d*)", source)
-                numeric_id = match.group(1)
-                return numeric_id
-            except (AttributeError, TypeError, KeyError, ValueError):
-                log.error("Numeric ID not found, returning 0")
-                return 0
+            facebook_driver = FacebookWebdriver('/usr/local/bin/chromedriver')
+            facebook_driver.set_page_load_timeout(10)
+            facebook_driver.login(constants['facebook_email'], constants['facebook_password'])
+            numeric_id = facebook_driver.get_numeric_id(self.user_name)
+            facebook_driver.close()
+            return numeric_id
 
     def check_for_public_page(self):
         """
@@ -182,6 +174,14 @@ class FacebookScraper:
         return True
 
     def write_to_file(self, directory=''):
+        """
+        Writes scraped data to a file.
+
+        Parameters
+        ----------
+        directory: str
+            Optional directory where the file will be located
+        """
         if not directory:
             directory = 'data/facebook/'
 
