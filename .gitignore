@@ -11,3 +11,10 @@ gen
 scraper/constants.py
 *.pkl
 ghostdriver.log
+
+data/facebook/*.txt
+data/twitter/*.txt
+
+logs/logfile.log
+
+*.rdb
