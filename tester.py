@@ -1,18 +1,11 @@
-from scraper.TwitterScraper import TwitterScraper
-from scraper.FacebookScraper import FacebookScraper
-from datetime import datetime
-import locale
 import sys
-import facebook
-import pickle
-from scraper import util
-import requests
-from bs4 import BeautifulSoup
-import urllib3
-import re
-from scraper.constants import facebook_email, facebook_password, facebook_access_token
+from datetime import datetime
 
-from selenium import webdriver
+import facebook
+import locale
+
+from scraper.FacebookScraper import FacebookScraper
+from scraper.constants import facebook_access_token
 
 graph = facebook.GraphAPI(
             access_token=facebook_access_token,

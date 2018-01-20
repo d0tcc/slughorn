@@ -1,21 +1,17 @@
-import facebook
-from datetime import datetime, timedelta
-import redis
 import logging
+from datetime import datetime, timedelta
+
+import click_spinner
+import facebook
+import os
 import re
-from scraper import util
-from scraper.constants import facebook_access_token, facebook_password, facebook_email
-from selenium import webdriver
+import redis
 from FacebookWebBot import *
+from scraper import util
 
-
-logging.basicConfig(format='%(asctime)s [%(levelname)-5.5s]  %(message)s', level=logging.INFO)
-log = logging.getLogger(__name__)
+log = logging.getLogger('slughorn')
 
 r = redis.StrictRedis(host='localhost', port=6379, db=0)
-graph = facebook.GraphAPI(
-            access_token=facebook_access_token,
-            version="2.5")
 
 class FacebookScraper:
     """
@@ -41,8 +37,12 @@ class FacebookScraper:
         numeric_id: int
             Numeric ID of the Facebook profile
         """
+        from scraper.constants import constants
         self.user_name = user_name
         self.case_number = case_number
+        self.graph = facebook.GraphAPI(
+            access_token=constants['facebook_access_token'],
+            version="2.5")
         self.is_public_page = self.check_for_public_page()
         self.driver = webdriver.PhantomJS('/usr/local/bin/phantomjs')
 
@@ -52,6 +52,7 @@ class FacebookScraper:
             self.numeric_id = numeric_id
 
         self.posts = []
+
 
     def scrape_all(self):
         """
@@ -94,41 +95,40 @@ class FacebookScraper:
         if self.is_public_page:
             more_to_come = True
 
+            with click_spinner.spinner():
+                while more_to_come:
+                    url = util.create_url_for_facebook_api(self.numeric_id, from_date, to_date)
+                    site = self.graph.request(url)
 
-            while more_to_come:
-                url = util.create_url_for_facebook_api(self.numeric_id, from_date, to_date)
-                site = graph.request(url)
+                    posts_data = site['data']
+                    log.debug(posts_data)
+                    posts_with_time = [(post.get('message', post.get('story', '')), post.get('created_time')) for post in posts_data]
+                    if len(posts_with_time) < 100:
+                        more_to_come = False
+                        posts = [post[0] for post in posts_with_time]
+                    else:
+                        raw_last_date = posts_with_time[-1][1]
+                        log.debug("REACHED 100 at {}".format(raw_last_date))
+                        last_date = datetime.strptime(raw_last_date, '%Y-%m-%dT%H:%M:%S+%f').date()
+                        to_date = last_date + timedelta(days=1)  # to_date is not included in the search, +1 to include it
+                        posts = [post[0] for post in posts_with_time if not datetime.strptime(post[1], '%Y-%m-%dT%H:%M:%S+%f').date() == last_date]  # remove days from the current day because they will be included in the next search step
+                    found_posts.extend(posts)
 
-                posts_data = site['data']
-                print(posts_data)
-                posts_with_time = [(post.get('message', post.get('story', '')), post.get('created_time')) for post in posts_data]
-                if len(posts_with_time) < 100:
-                    more_to_come = False
-                    posts = [post[0] for post in posts_with_time]
-                else:
-                    raw_last_date = posts_with_time[-1][1]
-                    print("REACHED 100 at", raw_last_date)
-                    last_date = datetime.strptime(raw_last_date, '%Y-%m-%dT%H:%M:%S+%f').date()
-                    to_date = last_date + timedelta(days=1)  # to_date is not included in the search, +1 to include it
-                    posts = [post[0] for post in posts_with_time if not datetime.strptime(post[1], '%Y-%m-%dT%H:%M:%S+%f').date() == last_date]  # remove days from the current day because they will be included in the next search step
-                found_posts.extend(posts)
-
-            self.posts.extend(found_posts)
-            return len(found_posts)
+                self.posts.extend(found_posts)
+                return len(found_posts)
 
         else:
-            print("DISCLAIMER: Timeframe scraping is only possible for public pages. Scraping all posts ...")
-
+            from scraper.constants import constants
             bot = FacebookBot('/usr/local/bin/chromedriver')
             bot.set_page_load_timeout(10)
-            bot.login(facebook_email, facebook_password)
+            bot.login(constants['facebook_email'], constants['facebook_password'])
             all_posts = bot.getPostInProfile('https://mbasic.facebook.com/{}'.format(self.user_name),
                                              moreText="Mehr anzeigen") #  moreText must be adapted to language settings
                                                                        #  of scraping profile
-            for p in all_posts:
-                print(p)
-
+            self.posts = all_posts
             self.driver.close()
+
+        print("Finished scraping Facebook posts for user '{}'".format(self.user_name))
 
 
     def find_numeric_id(self):
@@ -145,12 +145,13 @@ class FacebookScraper:
         """
         if self.is_public_page:
             url = "/{}".format(self.user_name)
-            site = graph.request(url)
+            site = self.graph.request(url)
             numeric_id = site.get('id', 0)
             return numeric_id
         else:
+            from scraper.constants import constants
             url = 'https://www.facebook.com/' + self.user_name
-            util.login_facebook(self.driver, facebook_email, facebook_password)
+            util.login_facebook(self.driver, constants['facebook_email'], constants['facebook_password'])
             self.driver.get(url)
             source = self.driver.page_source
             try:
@@ -175,7 +176,24 @@ class FacebookScraper:
         """
         try:
             url = "/{}".format(self.user_name)
-            graph.request(url)
+            self.graph.request(url)
         except facebook.GraphAPIError:
             return False
         return True
+
+    def write_to_file(self, directory=''):
+        if not directory:
+            directory = 'data/facebook/'
+
+        today = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+        file = os.path.join(directory, 'fb_{}_{}_{}.txt'.format(self.case_number, self.user_name, today))
+
+        # TODO change from whole posts to words to password lists
+        log.info("Writing Facebook posts to file {}".format(file))
+        output = ''
+        for post in self.posts:
+            output += post + "\n----------\n"
+
+        with open(file=file, mode='w+') as f:
+            f.write(output)
+        log.info("Successfully written to file {}".format(file))
