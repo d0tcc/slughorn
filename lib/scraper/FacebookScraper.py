@@ -3,8 +3,8 @@ import click_spinner
 import facebook
 import os
 import redis
-from scraper.webdriver.FacebookWebdriver import *
-from scraper import util
+from lib.scraper.webdriver.FacebookWebdriver import *
+from lib.scraper import util
 
 log = logging.getLogger('slughorn')
 

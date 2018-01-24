@@ -1,6 +1,6 @@
 import click
 import os
-from scraper import FacebookScraper, TwitterScraper
+from lib.scraper import FacebookScraper, TwitterScraper
 import logging
 import logging.config
 
