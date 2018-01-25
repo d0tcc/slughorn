@@ -8,7 +8,7 @@
 out
 gen
 
-scraper/constants.py
+lib/scraper/constants.py
 *.pkl
 ghostdriver.log
 

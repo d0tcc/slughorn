@@ -8,7 +8,7 @@ import time
 import math
 import logging
 from datetime import timedelta
-from scraper import util
+from lib.scraper import util
 
 log = logging.getLogger('slughorn')
 

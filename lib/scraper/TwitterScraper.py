@@ -3,7 +3,7 @@ import requests
 from bs4 import BeautifulSoup
 import os
 import click_spinner
-from scraper.webdriver.TwitterWebdriver import *
+from lib.scraper.webdriver.TwitterWebdriver import *
 
 log = logging.getLogger('slughorn')
 
