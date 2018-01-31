@@ -27,3 +27,5 @@ Werkzeug==0.12.2
 WTForms==2.1
 click-spinner==0.1.7
 git+https://github.com/facebookresearch/fastText.git
+pycountry==17.9.23
+nltk==3.2.5
