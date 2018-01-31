@@ -29,3 +29,4 @@ click-spinner==0.1.7
 git+https://github.com/facebookresearch/fastText.git
 pycountry==17.9.23
 nltk==3.2.5
+wordfreq==1.6.1
