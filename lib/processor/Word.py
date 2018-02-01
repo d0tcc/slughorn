@@ -8,4 +8,4 @@ class Word:
         self.score = score
 
     def __repr__(self):
-        return "Word({}, occ: {}, comm: {}, sco: {})".format(self.term, self.occurrences, self.exceptionalism, self.score)
+        return "Word({0}, occ: {1}, comm: {2:.2f}, sco: {3:.2f})".format(self.term, self.occurrences, self.exceptionalism, self.score)

@@ -12,8 +12,9 @@ lib/scraper/constants.py
 *.pkl
 ghostdriver.log
 
-data/facebook/*.txt
-data/twitter/*.txt
+data/facebook/*
+data/twitter/*
+!.gitkeep
 
 logs/logfile.log
 

@@ -25,32 +25,35 @@ def detect_language(text):
     return language_code
 
 
+def clean_text(text):
+    bad_characters = ['„', '“']
+    for character in bad_characters:
+        text = text.replace(character, '')
+    return text
+
+
 def remove_stopwords(text, language_code):
     """
-    Removes stopwords from texts
+    Removes stopwords from text
 
     Removes all stopwords in the language of the text and returns all words which are longer than 1 character
     together as a list
     :return:
     """
+    result_list = []
+    text = clean_text(text)
     language_name = pycountry.languages.get(alpha_2=language_code).name.lower()
     stop_words = set(stopwords.words(language_name))
     words = word_tokenize(text)
     filtered_words = [word for word in words if word.lower() not in stop_words and len(word) > 1]
-    return filtered_words
-
-
-# def count_and_objectify_words(word_list):
-#     counter = Counter(word_list)
-#     word_objects = [Word(term=term, occurrences=occurrences) for term, occurrences in counter.items()]
-#     return word_objects
+    result_list.extend(filtered_words)
+    return result_list
 
 
 def calculate_exceptionalism(word_dict):
     for language, words in word_dict.items():
         for word, attributes in words.items():
             attributes['exceptionalism'] = 8 - zipf_frequency(word, language, wordlist='large')  # calculate exceptionalism
-            #attributes['score'] = attributes['exceptionalism'] * attributes['occurrences']  # calculate score
 
 
 def calculate_score(word_dict):
@@ -75,11 +78,25 @@ def combine_false_friends(word_dict):
                         del words1[intersection]
 
 
+def create_final_word_list(word_dict):
+    final_word_list = []
+    for language, words in word_dict.items():
+        for word, attributes in words.items():
+            final_word_list.append(Word(term=word,
+                                        occurrences=attributes['occurrences'],
+                                        exceptionalism=attributes['exceptionalism'],
+                                        language=language,
+                                        score=attributes['score']))
+    final_word_list.sort(key=lambda x: x.score, reverse=True)
+    return final_word_list
+
+
+
 class WordExtractor:
 
     def __init__(self, texts):
         self.texts = texts
-        self.extracted_words = defaultdict(lambda: defaultdict(lambda: defaultdict(int)))
+        self.final_word_list = []
 
     def extract_words(self):
         """
@@ -113,24 +130,25 @@ class WordExtractor:
         :return:
         """
 
+        extracted_words = defaultdict(lambda: defaultdict(lambda: defaultdict(int)))
+
         def update_language_dict(words, language):
             for word in words:
-                self.extracted_words[language][word]['occurrences'] += 1
+                extracted_words[language][word]['occurrences'] += 1
 
         for text in self.texts:
             language_code = detect_language(text)
             filtered_words = remove_stopwords(text, language_code)
             update_language_dict(filtered_words, language_code)
 
-        calculate_exceptionalism(self.extracted_words)
-        combine_false_friends(self.extracted_words)
-        calculate_score(self.extracted_words)
+        calculate_exceptionalism(extracted_words)
+        combine_false_friends(extracted_words)
+        calculate_score(extracted_words)
+        self.final_word_list = create_final_word_list(extracted_words)
 
     def print_words(self):
-        for language, words in self.extracted_words.items():
-            print(language)
-            for word, attributes in words.items():
-                print("{}: {} (occ), {} (exc), {} (sc)".format(word, attributes['occurrences'], attributes['exceptionalism'], attributes['score']))
+        for word in self.final_word_list:
+            print(word)
 
 
 test_texts = ["Nach aktuellen, auf DNA-Vergleichen beruhenden Verwandtschaftsanalysen sind diese traditionell "

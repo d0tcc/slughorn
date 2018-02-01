@@ -1,9 +1,12 @@
+from lib.scraper.webdriver.TwitterWebdriver import *
+
 from datetime import datetime, timedelta
 import requests
 from bs4 import BeautifulSoup
 import os
 import click_spinner
-from lib.scraper.webdriver.TwitterWebdriver import *
+import pickle
+
 
 log = logging.getLogger('slughorn')
 
@@ -102,28 +105,34 @@ class TwitterScraper:
             log.error("Join date not found, returning date of first tweet ever!")
             return datetime(2006, 3, 21)
 
-    def write_to_file(self, directory=''):
+    def write_to_file(self, pickled=True, directory=''):
         """
         Writes scraped data to a file.
 
         Parameters
         ----------
+        pickled: bool
+            Whether the file should be a pickle (txt if False)
         directory: str
             Optional directory where the file will be located
         """
         if not directory:
-            directory = 'data/twitter/'
+            directory = 'data/twitter/{}'.format(self.case_number)
 
         today = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
-        file = os.path.join(directory, 'tw_{}_{}_{}.txt'.format(self.case_number, self.user_name, today))
+        if not os.path.exists(directory):
+            os.makedirs(directory)
+        file = os.path.join(directory, 'twitter_{}_{}.{}'.format(self.user_name, today, ('pkl' if pickled else 'txt')))
 
-        # TODO change from whole posts to words to password lists
         log.info("Writing Tweets to file {}".format(file))
-        output = ''
-        for post in self.tweets:
-            output += post + "\n----------\n"
+        if pickled:
+            pickle.dump(self.tweets, open(file, "wb"))
+        else:
+            output = ''
+            for post in self.tweets:
+                output += post + "\n----------\n"
 
+            with open(file=file, mode='w+') as f:
+                f.write(output)
 
-        with open(file=file, mode='w+') as f:
-            f.write(output)
         log.info("Successfully written to file {}".format(file))
