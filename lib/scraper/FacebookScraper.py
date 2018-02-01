@@ -1,21 +1,25 @@
+from lib.scraper.webdriver.FacebookWebdriver import *
+from lib.scraper import util
+from lib.scraper.constants import constants
+
 from datetime import datetime, timedelta
 import click_spinner
 import facebook
 import os
-import redis
-from lib.scraper.webdriver.FacebookWebdriver import *
-from lib.scraper import util
+#import redis
+import pickle
+import logging
 
 log = logging.getLogger('slughorn')
 
-r = redis.StrictRedis(host='localhost', port=6379, db=0)
+#r = redis.StrictRedis(host='localhost', port=6379, db=0)
 
 class FacebookScraper:
     """
     A FacebookScraper object represents one attempt to retrieve facebook posts of a user.
     """
 
-    def __init__(self, user_name, case_number, numeric_id=0):
+    def __init__(self, user_name, case_id, numeric_id=0):
         """
         Init function of the FacebookScraper object.
 
@@ -29,14 +33,13 @@ class FacebookScraper:
         ----------
         user_name: str
             User name of the owner of the Twitter profile
-        case_number: str
+        case_id: str
             String representation of the case number
         numeric_id: int
             Numeric ID of the Facebook profile
         """
-        from scraper.constants import constants
         self.user_name = user_name
-        self.case_number = case_number
+        self.case_id = case_id
         self.graph = facebook.GraphAPI(
             access_token=constants['facebook_access_token'],
             version="2.5")
@@ -116,7 +119,7 @@ class FacebookScraper:
                 return len(found_posts)
 
         else:
-            from scraper.constants import constants
+            from lib.scraper.constants import constants
             facebook_webdriver = FacebookWebdriver('/usr/local/bin/chromedriver')
             facebook_webdriver.set_page_load_timeout(10)
             facebook_webdriver.login(constants['facebook_email'], constants['facebook_password'])
@@ -146,7 +149,6 @@ class FacebookScraper:
             numeric_id = site.get('id', 0)
             return numeric_id
         else:
-            from scraper.constants import constants
             facebook_driver = FacebookWebdriver('/usr/local/bin/chromedriver')
             facebook_driver.set_page_load_timeout(10)
             facebook_driver.login(constants['facebook_email'], constants['facebook_password'])
@@ -169,31 +171,39 @@ class FacebookScraper:
         try:
             url = "/{}".format(self.user_name)
             self.graph.request(url)
-        except facebook.GraphAPIError:
+        except facebook.GraphAPIError as e:
+            log.error("Error in check_for_public_page: " + str(e))
             return False
         return True
 
-    def write_to_file(self, directory=''):
+    def write_to_file(self, directory='', pickled=True):
         """
         Writes scraped data to a file.
 
         Parameters
         ----------
+        pickled: bool
+            Whether the file should be a pickle (txt if False)
         directory: str
             Optional directory where the file will be located
         """
         if not directory:
-            directory = 'data/facebook/'
+            directory = 'data/{}'.format(self.case_id)
 
         today = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
-        file = os.path.join(directory, 'fb_{}_{}_{}.txt'.format(self.case_number, self.user_name, today))
+        if not os.path.exists(directory):
+            os.makedirs(directory)
+        file = os.path.join(directory, 'facebook_{}_{}.{}'.format(self.user_name, today, ('pkl' if pickled else 'txt')))
 
-        # TODO change from whole posts to words to password lists
-        log.info("Writing Facebook posts to file {}".format(file))
-        output = ''
-        for post in self.posts:
-            output += post + "\n----------\n"
+        log.info("Writing Facebook posts to file")
+        if pickled:
+            pickle.dump(self.posts, open(file, "wb"))
+        else:
+            output = ''
+            for post in self.posts:
+                output += post + "\n----------\n"
 
-        with open(file=file, mode='w+') as f:
-            f.write(output)
+            with open(file=file, mode='w+') as f:
+                f.write(output)
+
         log.info("Successfully written to file {}".format(file))

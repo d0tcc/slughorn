@@ -1,12 +1,12 @@
 from lib.scraper.webdriver.TwitterWebdriver import *
 
-from datetime import datetime, timedelta
+from datetime import datetime
 import requests
 from bs4 import BeautifulSoup
 import os
 import click_spinner
 import pickle
-
+import logging
 
 log = logging.getLogger('slughorn')
 
@@ -17,7 +17,7 @@ class TwitterScraper:
     A TwitterScraper object represents one attempt to retrieve tweets of a user.
     """
 
-    def __init__(self, user_name, case_number):
+    def __init__(self, user_name, case_id):
         """
         Init function of the TwitterScraper object.
 
@@ -29,11 +29,11 @@ class TwitterScraper:
         ----------
         user_name: str
             User name of the owner of the Twitter profile
-        case_number: str
+        case_id: str
             String representation of the case number
         """
         self.user_name = user_name
-        self.case_number = case_number
+        self.case_id = case_id
         self.join_date = self.find_join_date()
         self.tweets = []
 
@@ -105,7 +105,7 @@ class TwitterScraper:
             log.error("Join date not found, returning date of first tweet ever!")
             return datetime(2006, 3, 21)
 
-    def write_to_file(self, pickled=True, directory=''):
+    def write_to_file(self, directory='', pickled=True):
         """
         Writes scraped data to a file.
 
@@ -117,14 +117,14 @@ class TwitterScraper:
             Optional directory where the file will be located
         """
         if not directory:
-            directory = 'data/twitter/{}'.format(self.case_number)
+            directory = 'data/{}'.format(self.case_id)
 
         today = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
         if not os.path.exists(directory):
             os.makedirs(directory)
         file = os.path.join(directory, 'twitter_{}_{}.{}'.format(self.user_name, today, ('pkl' if pickled else 'txt')))
 
-        log.info("Writing Tweets to file {}".format(file))
+        log.info("Writing Tweets to file")
         if pickled:
             pickle.dump(self.tweets, open(file, "wb"))
         else:

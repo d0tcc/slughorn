@@ -1,13 +1,19 @@
 from lib.processor.Word import Word
 
+import os
 import fastText
+from datetime import datetime
 import pycountry
 from nltk.tokenize import word_tokenize
 from nltk.corpus import stopwords
 from wordfreq import zipf_frequency
 from collections import defaultdict
+import pickle
+import logging
 
-LANGUAGE_MODEL = fastText.load_model('./models/lid.176.ftz')
+log = logging.getLogger('slughorn')
+
+LANGUAGE_MODEL = fastText.load_model('lib/processor/models/lid.176.ftz')
 
 
 def detect_language(text):
@@ -20,6 +26,7 @@ def detect_language(text):
 
     k = 1 in the predict method returns only the most probable language
     """
+    text = text.replace('\n', ' ')
     language_label, probability = LANGUAGE_MODEL.predict(text, k=1)
     language_code = language_label[0].replace('__label__', '')
     return language_code
@@ -94,9 +101,10 @@ def create_final_word_list(word_dict):
 
 class WordExtractor:
 
-    def __init__(self, texts):
+    def __init__(self, texts, case_id, final_word_list=[]):
         self.texts = texts
-        self.final_word_list = []
+        self.case_id = case_id
+        self.final_word_list = final_word_list
 
     def extract_words(self):
         """
@@ -136,31 +144,68 @@ class WordExtractor:
             for word in words:
                 extracted_words[language][word]['occurrences'] += 1
 
+        log.info("Removing stopwords from posts ...")
         for text in self.texts:
             language_code = detect_language(text)
             filtered_words = remove_stopwords(text, language_code)
             update_language_dict(filtered_words, language_code)
 
+        log.info("Calculate exceptionalism of words ...")
         calculate_exceptionalism(extracted_words)
+        log.info("Combine False Friends ...")
         combine_false_friends(extracted_words)
+        log.info("Calculate score ...")
         calculate_score(extracted_words)
+        log.info("Finished extraction of words!")
         self.final_word_list = create_final_word_list(extracted_words)
 
     def print_words(self):
         for word in self.final_word_list:
             print(word)
 
+    def write_to_file(self, directory='', pickled=True):
+        """
+        Writes extracted words to a file.
 
-test_texts = ["Nach aktuellen, auf DNA-Vergleichen beruhenden Verwandtschaftsanalysen sind diese traditionell "
-              "ausgehaltenen Gattungsgruppen ebenfalls keine geschlossenen Abstammungsgemeinschaften. Stattdessen "
-              "verteilen sich die „Füchse“ auf fast drei Kladen: eine Graufuchs-Klade, eine Rotfuchs-Klade und eine Klade "
-              "mit ausschließlich südamerikanischen Wildhunden.",
-              "Twelve species belong to the monophyletic group of Vulpes genus of true foxes. Approximately another "
-              "25 current or extinct species are always or sometimes called foxes; these fast foxes are either part of the "
-              "paraphyletic group of the South American foxes, or of the outlying group, which consists of bat-eared "
-              "fox, gray fox, and island fox.",
-              "Particularité de la langue française, son développement et sa codification ont été en partie l’œuvre de "
-              "groupes intellectuels, comme la Pléiade, ou d’institutions, comme l’Académie française."]
-extractor = WordExtractor(test_texts)
-extractor.extract_words()
-extractor.print_words()
+        Parameters
+        ----------
+        pickled: bool
+            Whether the file should be a pickle (txt if False)
+        directory: str
+            Optional directory where the file will be located
+        """
+        if not directory:
+            directory = 'data/{}'.format(self.case_id)
+
+        today = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+        if not os.path.exists(directory):
+            os.makedirs(directory)
+        file = os.path.join(directory, 'words_{}.{}'.format(today, ('pkl' if pickled else 'txt')))
+
+        log.info("Writing extracted words to file")
+        if pickled:
+            pickle.dump(self.final_word_list, open(file, "wb"))
+        else:
+            output = ''
+            for word in self.final_word_list:
+                output += str(word) + "\n"
+
+            with open(file=file, mode='w+') as f:
+                f.write(output)
+
+        log.info("Successfully written to file {}".format(file))
+
+
+# test_texts = ["Nach aktuellen, auf DNA-Vergleichen beruhenden Verwandtschaftsanalysen sind diese traditionell "
+#               "ausgehaltenen Gattungsgruppen ebenfalls keine geschlossenen Abstammungsgemeinschaften. Stattdessen "
+#               "verteilen sich die „Füchse“ auf fast drei Kladen: eine Graufuchs-Klade, eine Rotfuchs-Klade und eine Klade "
+#               "mit ausschließlich südamerikanischen Wildhunden.",
+#               "Twelve species belong to the monophyletic group of Vulpes genus of true foxes. Approximately another "
+#               "25 current or extinct species are always or sometimes called foxes; these fast foxes are either part of the "
+#               "paraphyletic group of the South American foxes, or of the outlying group, which consists of bat-eared "
+#               "fox, gray fox, and island fox.",
+#               "Particularité de la langue française, son développement et sa codification ont été en partie l’œuvre de "
+#               "groupes intellectuels, comme la Pléiade, ou d’institutions, comme l’Académie française."]
+# extractor = WordExtractor(test_texts, 'TEST_CASE')
+# extractor.extract_words()
+# extractor.print_words()
