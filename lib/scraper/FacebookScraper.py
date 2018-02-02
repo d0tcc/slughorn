@@ -21,7 +21,7 @@ class FacebookScraper:
 
     def __init__(self, user_name, case_id, numeric_id=0):
         """
-        Init function of the FacebookScraper object.
+        Init method of the FacebookScraper Class.
 
         Initializes a FacebookScraper object, containing a given user_name and case_number.
         Based on the user_name the type of profile is being checked: public page or private profile.
@@ -29,14 +29,9 @@ class FacebookScraper:
         retrieved and is used later on.
         Furthermore an empty list of posts is initialized.
 
-        Parameters
-        ----------
-        user_name: str
-            User name of the owner of the Twitter profile
-        case_id: str
-            String representation of the case number
-        numeric_id: int
-            Numeric ID of the Facebook profile
+        :param user_name: User name of the owner of the Twitter profile
+        :param case_id: String representation of the case number
+        :param numeric_id: Numeric ID of the Facebook profile
         """
         self.user_name = user_name
         self.case_id = case_id
@@ -61,10 +56,7 @@ class FacebookScraper:
         Scrape all Facebook posts of the user which name is provided in self.user_name and saves them in self.posts. 
         Calls self.scrape_timeframe with date of the foundation of Facebook and today's date.
 
-        Returns
-        -------
-        int
-            Number of scraped Facebook posts
+        :return: Number of scraped Facebook posts
         """
         today = datetime.now()
         first_day_of_facebook = datetime(2004, 2, 1)
@@ -79,17 +71,9 @@ class FacebookScraper:
         Time frame scraping is only available if the user has a public page. Otherwise all posts are scraped.
         Uses Facebook's Graph API if user name belongs to a public site. Otherwise it uses the FacebookWebdriver.
 
-        Parameters
-        ----------
-        from_date : datetime
-            start date of time frame (Facebook posts from this day are included)
-        to_date : datetime
-            end date of time frame (Facebook posts from this day are included)
-
-        Returns
-        -------
-        int
-            Number of scraped Facebook posts
+        :param from_date: start date of time frame (Facebook posts from this day are included)
+        :param to_date: end date of time frame (Facebook posts from this day are included)
+        :return: Number of scraped Facebook posts
         """
         found_posts = []
 
@@ -138,10 +122,7 @@ class FacebookScraper:
         User's profiles are represented with numeric IDs which can be used for the Facebook Graph API. In our scenario 
         only public profile IDs are needed. A way to get IDs from profiles is provided anyway.
 
-        Returns
-        -------
-        int
-            Numeric ID of profile
+        :return: Numeric ID of profile
         """
         if self.is_public_page:
             url = "/{}".format(self.user_name)
@@ -163,10 +144,7 @@ class FacebookScraper:
         Only public pages can be accessed via the Facebook Graph API. If an exception is thrown the user's profile is 
         private.
 
-        Returns
-        -------
-        bool
-            Whether the profile is public or private
+        :return: Whether the profile is public or private
         """
         try:
             url = "/{}".format(self.user_name)
@@ -180,12 +158,8 @@ class FacebookScraper:
         """
         Writes scraped data to a file.
 
-        Parameters
-        ----------
-        pickled: bool
-            Whether the file should be a pickle (txt if False)
-        directory: str
-            Optional directory where the file will be located
+        :param directory: Optional directory where the file will be located
+        :param pickled: Whether the file should be a pickle (txt if False)
         """
         if not directory:
             directory = 'data/{}'.format(self.case_id)

@@ -25,12 +25,8 @@ class TwitterScraper:
         Based on the user_name the join_date is being retrieved with the method find_join_date().
         Furthermore an empty list of tweets and the webdriver is initialized.
 
-        Parameters
-        ----------
-        user_name: str
-            User name of the owner of the Twitter profile
-        case_id: str
-            String representation of the case number
+        :param user_name: User name of the owner of the Twitter profile
+        :param case_id: String representation of the case number
         """
         self.user_name = user_name
         self.case_id = case_id
@@ -47,10 +43,7 @@ class TwitterScraper:
         Scrape all tweets of the user which name is provided in self.user_name and saves them in self.tweets. Calls 
         self.scrape_timeframe with the users join date and today's date.
     
-        Returns
-        -------
-        int
-            Number of scraped tweets
+        :return: Number of scraped tweets
     
         """
         today = datetime.now()
@@ -65,17 +58,9 @@ class TwitterScraper:
         in self.tweets.
         Uses TwitterWebdriver to retrieve the tweets.
 
-        Parameters
-        ----------
-        from_date: datetime
-            start date of time frame (tweets from this day are included)
-        to_date: datetime
-            end date of time frame (tweets from this day are included)
-
-        Returns
-        -------
-        int
-            Number of scraped tweets
+        :param from_date: start date of time frame (tweets from this day are included)
+        :param to_date: end date of time frame (tweets from this day are included)
+        :return: Number of scraped tweets
         """
         twitter_webdriver = TwitterWebdriver('/usr/local/bin/chromedriver')
         twitter_webdriver.set_page_load_timeout(10)
@@ -90,10 +75,7 @@ class TwitterScraper:
         Scrape the join date of the user from the user's profile header card.
         If no join date can be found the day of the first tweet (21st of March 2006) is returned.
 
-        Returns
-        -------
-        datetime
-            Join date of user or 21st of March 2006 if no date could be found
+        :return: Join date of user or 21st of March 2006 if no date could be found
         """
         url = 'https://twitter.com/' + self.user_name
         r = requests.get(url, headers={"Accept-Language": "en-US"})
@@ -109,12 +91,8 @@ class TwitterScraper:
         """
         Writes scraped data to a file.
 
-        Parameters
-        ----------
-        pickled: bool
-            Whether the file should be a pickle (txt if False)
-        directory: str
-            Optional directory where the file will be located
+        :param directory: Optional directory where the file will be located
+        :param pickled: Whether the file should be a pickle (txt if False)
         """
         if not directory:
             directory = 'data/{}'.format(self.case_id)

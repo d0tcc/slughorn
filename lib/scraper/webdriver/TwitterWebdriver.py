@@ -1,14 +1,12 @@
 # coding: utf-8
-#
-# based on hikaruAi's FacebookBot (https://github.com/hikaruAi/FacebookBot)
-#
+from lib.scraper import util
+
 from selenium import webdriver
 from selenium.common.exceptions import NoSuchElementException
 import time
 import math
 import logging
 from datetime import timedelta
-from lib.scraper import util
 
 log = logging.getLogger('slughorn')
 
@@ -26,11 +24,7 @@ class TwitterWebdriver(webdriver.Chrome):
 
         Initializes a TwitterWebdriver object with webdriver at the given path.
 
-
-        Parameters
-        ----------
-        path_to_web_driver: str
-            Path to the installed webdriver
+        :param path_to_web_driver: Path to the installed webdriver
         """
         self.path_to_web_driver = path_to_web_driver
         options = webdriver.ChromeOptions()
@@ -46,19 +40,11 @@ class TwitterWebdriver(webdriver.Chrome):
         Tweets are scraped in blocks of one week. By scrolling down new tweets are dynamically loaded through 
         JavaScript.
 
-        Parameters
-        ----------
-        user_name: str
-            user name of the Twitter profile that will be scraped
-        from_date: datetime
-            start date of time frame (tweets from this day are included)
-        to_date: datetime
-            end date of time frame (tweets from this day are included)
+        :param user_name: user name of the Twitter profile that will be scraped
+        :param from_date: start date of time frame (tweets from this day are included)
+        :param to_date: end date of time frame (tweets from this day are included)
 
-        Returns
-        -------
-        list
-            List of scraped tweets
+        :return: List of scraped tweets
         """
         def scroll_down_and_count_tweets(driver, delay):
             driver.execute_script('window.scrollTo(0, document.body.scrollHeight);')

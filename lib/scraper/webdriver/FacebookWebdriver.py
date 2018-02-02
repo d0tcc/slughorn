@@ -20,15 +20,9 @@ def mfacebookToBasic(url):
     Reformat a url to load mbasic facebook instead of regular facebook, return the same string if
     the url does not contain facebook
     
-    Parameters
-    ----------
-    url : str
-        URL to be transformed
+    :param url: URL to be transformed
 
-    Returns
-    -------
-    str
-        Transformed URL or unchanged parameter if URL did not contain 'facebook'
+    :return: Transformed URL or unchanged parameter if URL did not contain 'facebook'
     """
 
     if "m.facebook.com" in url:
@@ -50,11 +44,7 @@ class FacebookWebdriver(webdriver.Chrome):
 
         Initializes a FacebookWebdriver object with webdriver at the given path.
 
-
-        Parameters
-        ----------
-        path_to_web_driver: str
-            Path to the installed webdriver
+        :param path_to_web_driver: Path to the installed webdriver
         """
         self.path_to_web_driver = path_to_web_driver
         options = webdriver.ChromeOptions()
@@ -65,10 +55,7 @@ class FacebookWebdriver(webdriver.Chrome):
         """
         Call get function of super class but with transformed URL.
         
-        Parameters
-        ----------
-        url: str
-            URL to be called
+        :param url: URL to be called
         """
         super().get(mfacebookToBasic(url))
 
@@ -76,17 +63,9 @@ class FacebookWebdriver(webdriver.Chrome):
         """
         Login to facebook using email and password.
 
-        Parameters
-        ----------
-        email: str
-            email address of Facebook account
-        password: str
-            password of Facebook account
-
-        Returns
-        -------
-        bool
-            Whether the login was successful
+        :param email: email address of Facebook account
+        :param password: password of Facebook account
+        :return: Whether the login was successful
         """
         url = "https://mbasic.facebook.com"
         self.get(url)
@@ -109,10 +88,7 @@ class FacebookWebdriver(webdriver.Chrome):
         """
         Logout from Facebook
 
-        Returns
-        -------
-        bool
-            Whether the logout was successful
+        :return: Whether the logout was successful
         """
 
         url = "https://mbasic.facebook.com/logout.php?h=AffSEUYT5RsM6bkY&t=1446949608&ref_component=mbasic_footer&ref_page=%2Fwap%2Fhome.php&refid=7"
@@ -129,15 +105,8 @@ class FacebookWebdriver(webdriver.Chrome):
 
         User's profiles are represented with numeric IDs which can be used for the Facebook Graph API.
         
-        Parameters
-        ----------
-        user_name: str
-            user_name of Facebook profile
-        
-        Returns
-        -------
-        int
-            Numeric ID of profile
+        :param user_name: user_name of Facebook profile
+        :return: Numeric ID of profile
         """
         url = 'https://www.facebook.com/' + user_name
         self.get(url)
@@ -154,10 +123,7 @@ class FacebookWebdriver(webdriver.Chrome):
         """
         Get all groups a user is member in
 
-        Returns
-        -------
-        dict
-            A dictionary of all groups
+        :return: A dictionary of all groups
         """
         url = "https://m.facebook.com/groups/?seemore"
         groups = dict()
@@ -183,15 +149,8 @@ class FacebookWebdriver(webdriver.Chrome):
 
         Scrapes all facebook posts of the user which name is provided in user_name and returns them.
 
-        Parameters
-        ----------
-        user_name: str
-            user_name of Facebook profile
-            
-        Returns
-        -------
-        list
-            List of scraped Facebook posts
+        :param user_name: user_name of Facebook profile  
+        :return: List of scraped Facebook posts
         """
         """Return a list of Posts in a profile/fanpage , setup the "moreText" using your language, theres not elegant way to handle that"""
         posts_list = list()
