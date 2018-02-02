@@ -1,57 +1,28 @@
 from lib.scraper import FacebookScraper, TwitterScraper
-from lib.processor import WordExtractor
+from lib.processor import WordExtractor, PasswordGenerator
 
 import click
 import os
+import glob
+import pickle
 import logging.config
 
 logging.config.fileConfig('logs/logging.conf')
 log = logging.getLogger(__name__)
 
 ascii_slug = """
-
-                  /|                                        
-                 |_|                                       
-                 / |                                       
-           -.-.  | |   -.-.                                
-          -    ` |_|  -    `                                
-          -  o / | |  - o  /                                
-           `::´  | |   `::´                                
-            ::  |__|    ::                                  
-           .::-./``/....::....                            
-        .-.`    /  |          `.                             
-       :`                     :                             
-      -.                       :                            
-      /                        /                            
-      :                        :                            
-     -.                        ..                           
-     :                 `       `:                           
-     /                 .`       :                           
-     /               .--        /                           
-     /    /       ./ymN.         /                           
-     :   /...----/MMMMd         :                           
-     /       MMMMMMMMMM+        /                           
-     :       MMMMMMMMMMd        /                           
-     :       MMMM:::::dM        /                           
-     `       /MN.......         :                           
-     -        `                `/......_,                  
-     .                          .        |              
-`--`-.                          `        |                
-/                                     ___...............   
-`                                                       `.-
- `..`....................................................-`
         _             _                      
        | |           | |                     
     ___| |_   _  __ _| |__   ___  _ __ _ __  
    / __| | | | |/ _` | '_ \ / _ \| '__| '_ \ 
    \__ \ | |_| | (_| | | | | (_) | |  | | | |
    |___/_|\__,_|\__, |_| |_|\___/|_|  |_| |_|
-                 __/ |                       
+                 __/ |                 v.0.1 
                 |___/                        
 """
 
 
-def check_for_constants( ):
+def check_for_constants():
     constants_path = 'lib/scraper/constants.py'
     if not os.path.isfile(constants_path):
         if click.confirm('You need to create a constants.py file for Facebook scraping. Do you want to create it now?',
@@ -68,6 +39,17 @@ def check_for_constants( ):
             with open('scraper/constants.py', 'w+') as f:
                 f.write('constants = ' + str(constants))
             click.echo("Thank you! The file constants.py was created successfully. Let's continue ...")
+
+
+def ask_for_existing_files(type, directory):
+    files = glob.glob(os.path.join(directory, '{}_*.pkl'.format(type)))
+    if not files:
+        return False, None
+    else:
+        file = files[0]
+        use_file = click.confirm('An existing {} file "{}" for this case was found. '
+                             'Do you want to use it?'.format(type, file), default=True)
+        return use_file, file
 
 
 def start_facebook_scraper(user_name, output, case_id):
@@ -91,6 +73,13 @@ def start_processing(post_list, output, case_id):
     extractor.write_to_file(directory=output)
     return extractor.final_word_list
 
+def start_password_generation(word_list, output, case_id):
+    generator = PasswordGenerator.PasswordGenerator(word_list, case_id)
+    generator.generate_passwords()
+    generator.write_to_file(directory=output)
+
+
+
 
 @click.command()
 @click.option('-c', '--case_id', required=True, help="Required Case ID")
@@ -98,16 +87,48 @@ def start_processing(post_list, output, case_id):
 @click.option('-t', '--twitter_username', default='', help="Target's Twitter user name without leading @")
 @click.option('-o', '--output', default='', help="Path to output directory")
 def cli(case_id, facebook_username, twitter_username, output):
-    click.echo(ascii_slug)
+    if not (facebook_username or twitter_username):
+        click.echo("Please specify at least one username. If you need help try 'slughorn --help'")
+    else:
+        click.echo(ascii_slug)
 
-    post_list = []
+        if not output:
+            output = 'data/{}'.format(case_id)
 
-    if facebook_username:
-        click.echo("Starting Facebook scraping for user '{}'".format(facebook_username))
-        post_list.extend(start_facebook_scraper(facebook_username, output, case_id))
-    if twitter_username:
-        click.echo("Starting Twitter scraping for user '{}'".format(twitter_username))
-        post_list.extend(start_twitter_scraper(twitter_username, output, case_id))
+        word_list = []
 
-    word_list = start_processing(post_list, output, case_id)
-    # password_list = start_password_generation(word_list)
+        use_file, file = ask_for_existing_files('words', output)
+        if not use_file:
+
+            post_list = []
+
+            if facebook_username:
+                use_file, file = ask_for_existing_files('facebook', output)
+                if not use_file:
+                    click.echo("Starting Facebook scraping for user '{}'".format(facebook_username))
+                    facebook_posts = start_facebook_scraper(facebook_username, output, case_id)
+                else:
+                    facebook_posts = pickle.load(open(file, 'rb'))
+                post_list.extend(facebook_posts)
+            if twitter_username:
+                use_file, file = ask_for_existing_files('twitter', output)
+                if not use_file:
+                    click.echo("Starting Twitter scraping for user '{}'".format(twitter_username))
+                    twitter_tweets = start_twitter_scraper(twitter_username, output, case_id)
+                else:
+                    twitter_tweets = pickle.load(open(file, 'rb'))
+                post_list.extend(twitter_tweets)
+
+            if len(post_list) > 0:
+                word_list = start_processing(post_list, output, case_id)
+            else:
+                click.echo("No posts found. Please try again ...")
+
+        else:
+            word_list = pickle.load(open(file, 'rb'))
+
+        if len(word_list) > 0:
+            start_password_generation(word_list, output, case_id)
+            click.echo("slughorn finished. Happy cracking!")
+        else:
+            click.echo("No words found. Please try again ...")
