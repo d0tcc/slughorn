@@ -1,4 +1,4 @@
-from lib.processor.Word import Word
+from lib.processor.ExpressionObjects import Word, Number
 
 import os
 import re
@@ -65,8 +65,25 @@ def remove_stopwords(text, language_code):
     stop_words.update(['``', "''"])  # add double quotes because of weird facebook encoding
     text = clean_text(text)
     words = word_tokenize(text, language=language_name)
-    filtered_words = [word for word in words if word.lower() not in stop_words and len(word) > 1]
-    return filtered_words
+    filtered_strings = [word for word in words if word.lower() not in stop_words and len(word) > 1]
+    return filtered_strings
+
+
+def separate_words_and_numbers(strings):
+    """
+    Separates words and numbers into two lists.
+    
+    :param strings: List of strings.
+    :return: One list of words and one list of numbers
+    """
+    filtered_words = []
+    filtered_numbers = []
+    for string in strings:
+        if string.isdigit():
+            filtered_numbers.append(string)
+        else:
+            filtered_words.append(string)
+    return filtered_words, filtered_numbers
 
 
 def calculate_exceptionalism(word_dict):
@@ -142,25 +159,39 @@ def create_final_word_list(word_dict):
     return final_word_list
 
 
-
-class WordExtractor:
+def create_final_number_list(number_dict):
     """
-    A WordExtractor object represents one attempt to extract words from a list of posts.
+    Creates a list of Number objects from the dictionary of words and sorts it descending by occurences.
+
+    :param number_dict: dictionary of numbers
+    :return: A list of Number objects containing all information of the number_dict, sorted by occurences descending
+    """
+    final_number_list = []
+    for number, occurrences in number_dict.items():
+        final_number_list.append(Number(number, occurrences))
+    final_number_list.sort(key=lambda x: x.occurrences, reverse=True)
+    return final_number_list
+
+
+class ExpressionExtractor:
+    """
+    A WordExtractor object represents one attempt to extract words and numbers from a list of posts.
     """
 
-    def __init__(self, texts, case_id, final_word_list=[]):
+    def __init__(self, texts, case_id, final_expressions={}):
         """
         Init method of the WordExtractor Class
         
         :param texts: List of texts from a user
         :param case_id: String representation of the case number
         :param final_word_list: Final word list, is empty at initialization (parameter only for testing purposes)
+        :param final_number_list: Final number list, is empty at initialization (parameter only for testing purposes)
         """
         self.texts = texts
         self.case_id = case_id
-        self.final_word_list = final_word_list
+        self.final_expressions = final_expressions
 
-    def extract_words(self):
+    def extract_words_and_numbers(self):
         """
         Starts the extraction process.
         
@@ -198,10 +229,10 @@ class WordExtractor:
         Sets the final word list (list ob Word objects) as self.final_word_list.
         :return:
         """
-
         extracted_words = defaultdict(lambda: defaultdict(lambda: defaultdict(int)))
+        extracted_numbers = defaultdict(int)
 
-        def update_language_dict(words, language):
+        def update_word_dict(words, language):
             """
             Helper function to update the extracted_words dictionary for every text.
             Increments the occurrences of each word.
@@ -213,11 +244,24 @@ class WordExtractor:
             for word in words:
                 extracted_words[language][word]['occurrences'] += 1
 
+        def update_number_dict(numbers):
+            """
+            Helper function to update the extracted_words dictionary for every text.
+            Increments the occurrences of each word.
+
+            :param numbers: extracted numbers per single text
+            :return: 
+            """
+            for number in numbers:
+                extracted_numbers[number] += 1
+
         log.info("Removing stopwords from posts ...")
         for text in self.texts:
             language_code = detect_language(text)
-            filtered_words = remove_stopwords(text, language_code)
-            update_language_dict(filtered_words, language_code)
+            filtered_strings = remove_stopwords(text, language_code)
+            filtered_words, filtered_numbers = separate_words_and_numbers(filtered_strings)
+            update_number_dict(filtered_numbers)
+            update_word_dict(filtered_words, language_code)
 
         log.info("Calculate exceptionalism of words ...")
         calculate_exceptionalism(extracted_words)
@@ -225,17 +269,23 @@ class WordExtractor:
         combine_false_friends(extracted_words)
         log.info("Calculate score ...")
         calculate_score(extracted_words)
-        log.info("Finished extraction of words!")
-        self.final_word_list = create_final_word_list(extracted_words)
 
-    def print_words(self):
+        log.info("Finished extraction of words and numbers!")
+        final_word_list = create_final_word_list(extracted_words)
+        final_number_list = create_final_number_list(extracted_numbers)
+        self.final_expressions = {'words': final_word_list, 'numbers': final_number_list}
+
+
+    def print_expressions(self):
         """
-        Prints the words in the final word list
-        
+        Prints the words and numbers in the final expression list
+
         :return: 
         """
-        for word in self.final_word_list:
-            print(word)
+        for word in self.final_expressions['words']:
+            print(word.term)
+        for number in self.final_expressions['numbers']:
+            print(number.number)
 
     def write_to_file(self, directory='', pickled=True):
         """
@@ -250,15 +300,17 @@ class WordExtractor:
         today = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
         if not os.path.exists(directory):
             os.makedirs(directory)
-        file = os.path.join(directory, 'words_{}.{}'.format(today, ('pkl' if pickled else 'txt')))
+        file = os.path.join(directory, 'expressions_{}.{}'.format(today, ('pkl' if pickled else 'txt')))
 
-        log.info("Writing extracted words to file")
+        log.info("Writing extracted expressions to file")
         if pickled:
-            pickle.dump(self.final_word_list, open(file, "wb"))
+            pickle.dump(self.final_expressions, open(file, "wb"))
         else:
             output = ''
-            for word in self.final_word_list:
+            for word in self.final_expressions['words']:
                 output += str(word) + "\n"
+            for number in self.final_expressions['numbers']:
+                output += str(number) + "\n"
 
             with open(file=file, mode='w+') as f:
                 f.write(output)

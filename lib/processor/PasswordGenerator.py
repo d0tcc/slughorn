@@ -11,7 +11,7 @@ class PasswordGenerator:
     A PasswordGenerator object represents one attempt to generate passwords from a list of extracted words.
     """
 
-    def __init__(self, words, case_id, final_password_list=[]):
+    def __init__(self, expressions, case_id, final_expressi=[]):
         """
         Init method of the PasswordGenerator Class
 
@@ -20,7 +20,7 @@ class PasswordGenerator:
         :param final_password_list: Final password list, is empty at initialization (parameter only for testing 
         purposes)
         """
-        self.words = words
+        self.expressions = expressions
         self.case_id = case_id
         self.final_password_list = []
 
@@ -30,8 +30,10 @@ class PasswordGenerator:
         DUMMY
         """
         # TODO DUMMY DUMMY DUMMY
-        for word in self.words:
+        for word in self.expressions['words']:
             self.final_password_list.append(word.term)
+        for number in self.expressions['numbers']:
+            self.final_password_list.append(number.number)
 
     def write_to_file(self, directory='', pickled=False):
         """

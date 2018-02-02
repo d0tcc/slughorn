@@ -1,5 +1,5 @@
 from lib.scraper import FacebookScraper, TwitterScraper
-from lib.processor import WordExtractor, PasswordGenerator
+from lib.processor import ExpressionExtractor, PasswordGenerator
 
 import click
 import os
@@ -68,10 +68,11 @@ def start_twitter_scraper(user_name, output, case_id):
 
 
 def start_processing(post_list, output, case_id):
-    extractor = WordExtractor.WordExtractor(post_list, case_id)
-    extractor.extract_words()
-    extractor.write_to_file(directory=output)
-    return extractor.final_word_list
+    extractor = ExpressionExtractor.ExpressionExtractor(post_list, case_id)
+    extractor.extract_words_and_numbers()
+    extractor.write_to_file(directory=output, pickled=False)
+    return extractor.final_expressions
+
 
 def start_password_generation(word_list, output, case_id):
     generator = PasswordGenerator.PasswordGenerator(word_list, case_id)
@@ -93,9 +94,9 @@ def cli(case_id, facebook_username, twitter_username, output):
         if not output:
             output = 'data/{}'.format(case_id)
 
-        word_list = []
+        expression_list = []
 
-        use_file, file = ask_for_existing_files('words', output)
+        use_file, file = ask_for_existing_files('expressions', output)
         if not use_file:
 
             post_list = []
@@ -118,15 +119,15 @@ def cli(case_id, facebook_username, twitter_username, output):
                 post_list.extend(twitter_tweets)
 
             if len(post_list) > 0:
-                word_list = start_processing(post_list, output, case_id)
+                expression_list = start_processing(post_list, output, case_id)
             else:
                 click.echo("No posts found. Please try again ...")
 
         else:
-            word_list = pickle.load(open(file, 'rb'))
+            expression_list = pickle.load(open(file, 'rb'))
 
-        if len(word_list) > 0:
-            start_password_generation(word_list, output, case_id)
+        if len(expression_list) > 0:
+            start_password_generation(expression_list, output, case_id)
             click.echo("slughorn finished. Happy cracking!")
         else:
             click.echo("No words found. Please try again ...")
