@@ -1,6 +1,7 @@
 from lib.processor.Word import Word
 
 import os
+import re
 import fastText
 from datetime import datetime
 import pycountry
@@ -39,10 +40,14 @@ def clean_text(text):
     :param text: Text to be cleaned
     :return: Cleaned text
     """
-    bad_characters = ['„', '“']
+    cleaned_text = re.sub(r'^https?:\/\/.*[\r\n]*', '', text, flags=re.MULTILINE)  # remove URLs
+    bad_characters = ['„', '“', '`', "'", '´', ',', '.', '…', '‚', '‘', '‘', '’', '«', '»', '‹', '›']
     for character in bad_characters:
-        text = text.replace(character, '')
-    return text
+        cleaned_text = cleaned_text.replace(character, '')
+    ugly_characters = ['-', '_', '+', '>', '<', '*', '/', ]
+    for character in ugly_characters:
+        cleaned_text = cleaned_text.replace(character, ' ')
+    return cleaned_text
 
 
 def remove_stopwords(text, language_code):
@@ -55,14 +60,13 @@ def remove_stopwords(text, language_code):
     :param language_code: Language Code (alpha_2, e.g. 'en') of the text
     :return: List of non-stopwords longer than 1 character
     """
-    result_list = []
-    text = clean_text(text)
     language_name = pycountry.languages.get(alpha_2=language_code).name.lower()
     stop_words = set(stopwords.words(language_name))
-    words = word_tokenize(text)
+    stop_words.update(['``', "''"])  # add double quotes because of weird facebook encoding
+    text = clean_text(text)
+    words = word_tokenize(text, language=language_name)
     filtered_words = [word for word in words if word.lower() not in stop_words and len(word) > 1]
-    result_list.extend(filtered_words)
-    return result_list
+    return filtered_words
 
 
 def calculate_exceptionalism(word_dict):

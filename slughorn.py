@@ -79,8 +79,6 @@ def start_password_generation(word_list, output, case_id):
     generator.write_to_file(directory=output)
 
 
-
-
 @click.command()
 @click.option('-c', '--case_id', required=True, help="Required Case ID")
 @click.option('-f', '--facebook_username', default='', help="Target's Facebook user name")
