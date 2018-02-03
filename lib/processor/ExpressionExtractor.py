@@ -95,9 +95,13 @@ def separate_words_and_numbers(strings):
 
 def lemmatize_words(word_list):
     """
+    Lemmatizes german words, i.e. finds the base form ("Kühe" --> "Kuh", "gingen" --> "gehen")
     
-    :param word_list: 
-    :return: 
+    Uses a self trained german classifier to tag the components of a sentence into the categories 
+    Nouns, Adverbs, Adjectives and Verbs
+    
+    :param word_list: List of words
+    :return: list of lemmatized words
     """
 
     tagged_words = tagger.tag(word_list)
@@ -105,13 +109,13 @@ def lemmatize_words(word_list):
     base_words = []
 
     for word in tagged_words:
-        if word[1].startswith('N'):
+        if word[1].startswith('N'):  # Nouns
             pos = 'N'
-        elif word[1].startswith('V'):
+        elif word[1].startswith('V'):  # Verbs
             pos = 'V'
-        elif word[1].startswith('ADJ'):
+        elif word[1].startswith('ADJ'):  # Adjectives
             pos = 'ADJ'
-        elif word[1].startswith('ADV'):
+        elif word[1].startswith('ADV'):  # Adverbs
             pos = 'ADV'
         else:
             pos = None
