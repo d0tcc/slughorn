@@ -1,20 +1,27 @@
-from lib.processor.ExpressionObjects import Word, Number
-
-import os
-import re
-import fastText
-from datetime import datetime
-import pycountry
-from nltk.tokenize import word_tokenize
-from nltk.corpus import stopwords
-from wordfreq import zipf_frequency
-from collections import defaultdict
-import pickle
 import logging
+import pickle
+from datetime import datetime
+import click
+import fastText
+import os
+import pycountry
+import re
+from collections import defaultdict
+from nltk.corpus import stopwords
+from nltk.tokenize import word_tokenize
+from wordfreq import zipf_frequency
+
+from lib.processor.ExpressionObjects import Word, Number
+from lib.processor.external_libraries.germalemma.germalemma import GermaLemma
 
 log = logging.getLogger('slughorn')
 
 LANGUAGE_MODEL = fastText.load_model('lib/processor/models/lid.176.ftz')
+
+with open('./lib/processor/models/nltk_german_classifier_data.pkl', 'rb') as f:
+    tagger = pickle.load(f)
+
+lemmatizer = GermaLemma(pickle='./lib/processor/external_libraries/germalemma/data/lemmata.pkl')
 
 
 def detect_language(text):
@@ -86,6 +93,37 @@ def separate_words_and_numbers(strings):
     return filtered_words, filtered_numbers
 
 
+def lemmatize_words(word_list):
+    """
+    
+    :param word_list: 
+    :return: 
+    """
+
+    tagged_words = tagger.tag(word_list)
+
+    base_words = []
+
+    for word in tagged_words:
+        if word[1].startswith('N'):
+            pos = 'N'
+        elif word[1].startswith('V'):
+            pos = 'V'
+        elif word[1].startswith('ADJ'):
+            pos = 'ADJ'
+        elif word[1].startswith('ADV'):
+            pos = 'ADV'
+        else:
+            pos = None
+
+        if pos:
+            lemma = lemmatizer.find_lemma(word[0], pos)
+        else:
+            lemma = word[0]
+        base_words.append(lemma)
+    return base_words
+
+
 def calculate_exceptionalism(word_dict):
     """
     Detects how common the words are in their language using 'wordfreq'
@@ -95,9 +133,10 @@ def calculate_exceptionalism(word_dict):
     :param word_dict: dictionary of words
     :return: 
     """
-    for language, words in word_dict.items():
-        for word, attributes in words.items():
-            attributes['exceptionalism'] = 8 - zipf_frequency(word, language, wordlist='large')  # calculate exceptionalism
+    with click.progressbar(word_dict.items(), label='Calculating exceptionalism', show_eta=False) as bar:
+        for language, words in bar:
+            for word, attributes in words.items():
+                attributes['exceptionalism'] = 8 - zipf_frequency(word, language, wordlist='large')  # calculate exceptionalism
 
 
 def calculate_score(word_dict):
@@ -109,9 +148,10 @@ def calculate_score(word_dict):
     :param word_dict: dictionary of words
     :return:
     """
-    for language, words in word_dict.items():
-        for word, attributes in words.items():
-            attributes['score'] = attributes['exceptionalism'] * attributes['occurrences']  # calculate score
+    with click.progressbar(word_dict.items(), label='Calculating score', show_eta=False) as bar:
+        for language, words in bar:
+            for word, attributes in words.items():
+                attributes['score'] = attributes['exceptionalism'] * attributes['occurrences']  # calculate score
 
 
 def combine_false_friends(word_dict):
@@ -125,19 +165,20 @@ def combine_false_friends(word_dict):
     :param word_dict: dictionary of words
     :return: 
     """
-    for language1, words1 in word_dict.items():
-        for language2, words2 in word_dict.items():
-            if language1 == language2:
-                continue
-            else:
-                for intersection in set(words1).intersection(set(words2)):
-                    # TODO: more dynamic solution: higher_exceptionalism = max([words1, words2], key=...)
-                    if words1[intersection]['exceptionalism'] > words2[intersection]['exceptionalism']:
-                        words1[intersection]['occurrences'] += words2[intersection]['occurrences']
-                        del words2[intersection]
-                    else:
-                        words2[intersection]['occurrences'] += words1[intersection]['occurrences']
-                        del words1[intersection]
+    with click.progressbar(word_dict.items(), label='Combining False Friends', show_eta=False) as bar:
+        for language1, words1 in bar:
+            for language2, words2 in word_dict.items():
+                if language1 == language2:
+                    continue
+                else:
+                    for intersection in set(words1).intersection(set(words2)):
+                        # TODO: more dynamic solution: higher_exceptionalism = max([words1, words2], key=...)
+                        if words1[intersection]['exceptionalism'] > words2[intersection]['exceptionalism']:
+                            words1[intersection]['occurrences'] += words2[intersection]['occurrences']
+                            del words2[intersection]
+                        else:
+                            words2[intersection]['occurrences'] += words1[intersection]['occurrences']
+                            del words1[intersection]
 
 
 def create_final_word_list(word_dict):
@@ -148,13 +189,14 @@ def create_final_word_list(word_dict):
     :return: A list of Word objects containing all information of the word_dict, sorted by score descending
     """
     final_word_list = []
-    for language, words in word_dict.items():
-        for word, attributes in words.items():
-            final_word_list.append(Word(term=word,
-                                        occurrences=attributes['occurrences'],
-                                        exceptionalism=attributes['exceptionalism'],
-                                        language=language,
-                                        score=attributes['score']))
+    with click.progressbar(word_dict.items(), label='Creating final word list', show_eta=False) as bar:
+        for language, words in bar:
+            for word, attributes in words.items():
+                final_word_list.append(Word(term=word,
+                                            occurrences=attributes['occurrences'],
+                                            exceptionalism=attributes['exceptionalism'],
+                                            language=language,
+                                            score=attributes['score']))
     final_word_list.sort(key=lambda x: x.score, reverse=True)
     return final_word_list
 
@@ -167,8 +209,9 @@ def create_final_number_list(number_dict):
     :return: A list of Number objects containing all information of the number_dict, sorted by occurences descending
     """
     final_number_list = []
-    for number, occurrences in number_dict.items():
-        final_number_list.append(Number(number, occurrences))
+    with click.progressbar(number_dict.items(), label='Creating final number list', show_eta=False) as bar:
+        for number, occurrences in bar:
+            final_number_list.append(Number(number, occurrences))
     final_number_list.sort(key=lambda x: x.occurrences, reverse=True)
     return final_number_list
 
@@ -255,25 +298,28 @@ class ExpressionExtractor:
             for number in numbers:
                 extracted_numbers[number] += 1
 
-        log.info("Removing stopwords from posts ...")
-        for text in self.texts:
-            language_code = detect_language(text)
-            filtered_strings = remove_stopwords(text, language_code)
-            filtered_words, filtered_numbers = separate_words_and_numbers(filtered_strings)
-            update_number_dict(filtered_numbers)
-            update_word_dict(filtered_words, language_code)
+        log.debug("Filtering posts ...")
+        with click.progressbar(self.texts, label='Filtering {} posts'.format(len(self.texts)), show_eta=False) as bar:
+            for text in bar:
+                language_code = detect_language(text)
+                filtered_strings = remove_stopwords(text, language_code)
+                filtered_words, filtered_numbers = separate_words_and_numbers(filtered_strings)
+                if language_code == 'de':
+                    filtered_words = lemmatize_words(filtered_words)
+                update_number_dict(filtered_numbers)
+                update_word_dict(filtered_words, language_code)
 
-        log.info("Calculate exceptionalism of words ...")
+        log.debug("Calculating exceptionalism of words ...")
         calculate_exceptionalism(extracted_words)
-        log.info("Combine False Friends ...")
+        log.debug("Combining False Friends ...")
         combine_false_friends(extracted_words)
-        log.info("Calculate score ...")
+        log.debug("Calculating score ...")
         calculate_score(extracted_words)
 
-        log.info("Finished extraction of words and numbers!")
         final_word_list = create_final_word_list(extracted_words)
         final_number_list = create_final_number_list(extracted_numbers)
         self.final_expressions = {'words': final_word_list, 'numbers': final_number_list}
+        log.info("Finished extraction of words and numbers!")
 
 
     def print_expressions(self):

@@ -8,10 +8,10 @@
 out
 gen
 pycharm_runner.py
-
+FacebookCookies.pkl
 lib/scraper/constants.py
-*.pkl
 ghostdriver.log
+
 
 data/*/*.txt
 data/*/*.pkl

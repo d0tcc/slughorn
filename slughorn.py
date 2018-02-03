@@ -70,7 +70,7 @@ def start_twitter_scraper(user_name, output, case_id):
 def start_processing(post_list, output, case_id):
     extractor = ExpressionExtractor.ExpressionExtractor(post_list, case_id)
     extractor.extract_words_and_numbers()
-    extractor.write_to_file(directory=output, pickled=False)
+    extractor.write_to_file(directory=output, pickled=True)
     return extractor.final_expressions
 
 
