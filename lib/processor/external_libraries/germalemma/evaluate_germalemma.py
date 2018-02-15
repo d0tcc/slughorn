@@ -12,7 +12,7 @@ except ImportError:
     print("NOT using pattern.de")
     PATTERNLIB = False
 
-from germalemma import GermaLemma, VALID_POS_PREFIXES
+from lib.processor.external_libraries.germalemma.germalemma import GermaLemma, VALID_POS_PREFIXES
 
 
 def load_tokens_from_tiger(corpus_file):

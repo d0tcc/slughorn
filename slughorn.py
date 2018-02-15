@@ -67,10 +67,10 @@ def start_twitter_scraper(user_name, output, case_id):
     return twitter_scraper.tweets
 
 
-def start_processing(post_list, output, case_id):
+def start_processing(post_list, output, case_id, pickled):
     extractor = ExpressionExtractor.ExpressionExtractor(post_list, case_id)
     extractor.extract_words_and_numbers()
-    extractor.write_to_file(directory=output, pickled=True)
+    extractor.write_to_file(directory=output, pickled=pickled)
     return extractor.final_expressions
 
 
@@ -85,7 +85,8 @@ def start_password_generation(word_list, output, case_id):
 @click.option('-f', '--facebook_username', default='', help="Target's Facebook user name")
 @click.option('-t', '--twitter_username', default='', help="Target's Twitter user name without leading @")
 @click.option('-o', '--output', default='', help="Path to output directory")
-def cli(case_id, facebook_username, twitter_username, output):
+@click.option('--txt', is_flag=True, help="Save intermediate results as txt instead of pickle (results cannot be reused)")
+def cli(case_id, facebook_username, twitter_username, output, txt):
     if not (facebook_username or twitter_username):
         click.echo("Please specify at least one username. If you need help try 'slughorn --help'")
     else:
@@ -119,7 +120,7 @@ def cli(case_id, facebook_username, twitter_username, output):
                 post_list.extend(twitter_tweets)
 
             if len(post_list) > 0:
-                expression_list = start_processing(post_list, output, case_id)
+                expression_list = start_processing(post_list, output, case_id, not txt)
             else:
                 click.echo("No posts found. Please try again ...")
 

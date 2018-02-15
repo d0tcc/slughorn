@@ -17,12 +17,12 @@ class PasswordGenerator:
 
         :param words: List of Word objects extracted for a user
         :param case_id: String representation of the case number
-        :param final_password_list: Final password list, is empty at initialization (parameter only for testing 
+        :param final_passwords: Final password list, is empty at initialization (parameter only for testing 
         purposes)
         """
         self.expressions = expressions
         self.case_id = case_id
-        self.final_password_list = []
+        self.final_passwords = []
 
     def generate_passwords(self):
         """
@@ -31,9 +31,9 @@ class PasswordGenerator:
         """
         # TODO DUMMY DUMMY DUMMY
         for word in self.expressions['words']:
-            self.final_password_list.append(word.term)
+            self.final_passwords.append(word.term)
         for number in self.expressions['numbers']:
-            self.final_password_list.append(number.number)
+            self.final_passwords.append(number.number)
 
     def write_to_file(self, directory='', pickled=False):
         """
@@ -52,10 +52,10 @@ class PasswordGenerator:
 
         log.info("Writing generated passwords to file")
         if pickled:
-            pickle.dump(self.final_password_list, open(file, "wb"))
+            pickle.dump(self.final_passwords, open(file, "wb"))
         else:
             output = ''
-            for word in self.final_password_list:
+            for word in self.final_passwords:
                 output += str(word) + "\n"
 
             with open(file=file, mode='w+') as f:

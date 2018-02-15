@@ -33,5 +33,5 @@ print("Training German Tagger ...")
 tagger = ClassifierBasedGermanTagger(train=train_sents)
 accuracy = tagger.evaluate(test_sents)
 print(accuracy)
-with open('models/nltk_german_classifier_data2.pkl', 'wb') as f:
+with open('models/nltk_german_classifier_data.pkl', 'wb') as f:
     pickle.dump(tagger, f)

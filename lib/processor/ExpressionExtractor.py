@@ -1,3 +1,7 @@
+from lib.processor.ExpressionObjects import Word, Number
+from lib.processor.external_libraries.germalemma.germalemma import GermaLemma
+from lib.processor.util import URL_REGEX, VALID_UNICODES, ADDITIONAL_STOPWORDS
+
 import logging
 import pickle
 from datetime import datetime
@@ -9,10 +13,7 @@ import re
 from collections import defaultdict
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
-from wordfreq import zipf_frequency
-
-from lib.processor.ExpressionObjects import Word, Number
-from lib.processor.external_libraries.germalemma.germalemma import GermaLemma
+from wordfreq import word_frequency, top_n_list
 
 log = logging.getLogger('slughorn')
 
@@ -47,13 +48,16 @@ def clean_text(text):
     :param text: Text to be cleaned
     :return: Cleaned text
     """
-    cleaned_text = re.sub(r'^https?:\/\/.*[\r\n]*', '', text, flags=re.MULTILINE)  # remove URLs
-    bad_characters = ['„', '“', '`', "'", '´', ',', '.', '…', '‚', '‘', '‘', '’', '«', '»', '‹', '›']
-    for character in bad_characters:
-        cleaned_text = cleaned_text.replace(character, '')
+    cleaned_text = re.sub(URL_REGEX, '', text, flags=re.MULTILINE)  # remove URLs
     ugly_characters = ['-', '_', '+', '>', '<', '*', '/', ]
     for character in ugly_characters:
         cleaned_text = cleaned_text.replace(character, ' ')
+
+    #bad_characters = ['„', '“', '`', "'", '´', ',', '.', '…', '‚', '‘', '‘', '’', '«', '»', '‹', '›']
+    # for character in bad_characters:
+    #     cleaned_text = cleaned_text.replace(character, '')
+    cleaned_text = "".join(i for i in cleaned_text if ord(i) in VALID_UNICODES)
+
     return cleaned_text
 
 
@@ -65,14 +69,16 @@ def remove_stopwords(text, language_code):
     together as a list
     :param text: Text the stopwords will be removed from
     :param language_code: Language Code (alpha_2, e.g. 'en') of the text
-    :return: List of non-stopwords longer than 1 character
+    :return: List of non-stopwords longer than 2 character
     """
     language_name = pycountry.languages.get(alpha_2=language_code).name.lower()
     stop_words = set(stopwords.words(language_name))
     stop_words.update(['``', "''"])  # add double quotes because of weird facebook encoding
+    additional_stopwords = ADDITIONAL_STOPWORDS.get(language_name, [])
+    stop_words.update(additional_stopwords)
     text = clean_text(text)
     words = word_tokenize(text, language=language_name)
-    filtered_strings = [word for word in words if word.lower() not in stop_words and len(word) > 1]
+    filtered_strings = [word.lower() for word in words if word.lower() not in stop_words and len(word) > 2]
     return filtered_strings
 
 
@@ -109,20 +115,9 @@ def lemmatize_words(word_list):
     base_words = []
 
     for word in tagged_words:
-        if word[1].startswith('N'):  # Nouns
-            pos = 'N'
-        elif word[1].startswith('V'):  # Verbs
-            pos = 'V'
-        elif word[1].startswith('ADJ'):  # Adjectives
-            pos = 'ADJ'
-        elif word[1].startswith('ADV'):  # Adverbs
-            pos = 'ADV'
-        else:
-            pos = None
-
-        if pos:
-            lemma = lemmatizer.find_lemma(word[0], pos)
-        else:
+        try:
+            lemma = lemmatizer.find_lemma(word[0], word[1])
+        except ValueError:
             lemma = word[0]
         base_words.append(lemma)
     return base_words
@@ -131,16 +126,84 @@ def lemmatize_words(word_list):
 def calculate_exceptionalism(word_dict):
     """
     Detects how common the words are in their language using 'wordfreq'
-    zipf_frequency returns the commonness of a word on a logarithmic scale, with 8 being the most common and 0 being 
-    an unknown word. To get the exceptionalism of a word the value is substracted from 8.
+    word_frequency returns the share the word has in the language, with 1 if there is only one word in the corpus and 0
+    being an unknown word.
+    The value is Min-Max scaled by dividing it by the value of the word with the highest commonness.
+    To get the exceptionalism of a word the value is substracted from 1.
         
     :param word_dict: dictionary of words
     :return: 
     """
+    # def get_highest_frequency(word_dict):
+    #     """
+    #     Returns the highest possible frequency of any word in all given langauges.
+    #     The value is then used to Min-Max scale the frequency of words.
+    #
+    #     :param word_dict: dictionary of words
+    #     :return: The highest frequency of the most common word in all languages
+    #     """
+    #     highest_frequency = 0.0
+    #     for language in word_dict:
+    #         try:
+    #             frequency = word_frequency(top_n_list(language, wordlist='large', n=1)[0], language, wordlist='large')
+    #             if frequency > highest_frequency:
+    #                 highest_frequency = frequency
+    #         except ValueError:
+    #             pass
+    #     return highest_frequency
+
+    highest_frequency = 0.0
+    highest_word = ""
     with click.progressbar(word_dict.items(), label='Calculating exceptionalism', show_eta=False) as bar:
         for language, words in bar:
             for word, attributes in words.items():
-                attributes['exceptionalism'] = 8 - zipf_frequency(word, language, wordlist='large')  # calculate exceptionalism
+                frequency = word_frequency(word, language, wordlist='large')
+                attributes['exceptionalism'] = frequency
+                # save highest frequency for Min-Max Scaling
+                if frequency > highest_frequency:
+                    highest_frequency = frequency
+                    highest_word = word
+
+    # perform Min-Max Scaling (dividing by the maximum value appearing)
+    click.echo("Highest Frequency (exc): {} {}".format(highest_frequency, highest_word))
+    for language, words in word_dict.items():
+        for word, attributes in words.items():
+            attributes['exceptionalism'] = 1 - (attributes['exceptionalism'] / highest_frequency)
+
+
+def calculate_frequency(word_dict):
+    """
+    Calculates how often the words is used in all postings of the target person.
+    The amount of occurrences of every word is divided by the amount of all words together. This results in the share of
+    this word.
+    The value is Min-Max scaled by dividing it by the value of the word with the highest share.
+    
+    :param word_dict: dictionary of words
+    :return: 
+    """
+    total_amount_words = 0
+    for language, words in word_dict.items():
+        for word, attributes in words.items():
+            total_amount_words += attributes['occurrences']
+
+    click.echo("total amount of words: {}".format(total_amount_words))
+    highest_frequency = 0.0
+    highest_word = ''
+    with click.progressbar(word_dict.items(), label='Calculating frequency', show_eta=False) as bar:
+        for language, words in bar:
+            for word, attributes in words.items():
+                frequency = attributes['occurrences'] / total_amount_words
+                attributes['frequency'] = frequency
+                # save highest frequency for Min-Max Scaling
+                if frequency > highest_frequency:
+                    highest_frequency = frequency
+                    highest_word = word
+
+    # perform Min-Max Scaling (dividing by the maximum value appearing)
+    click.echo("Highest Frequency: {} {}".format(highest_frequency, highest_word))
+    for language, words in word_dict.items():
+        for word, attributes in words.items():
+            attributes['frequency'] /= highest_frequency
 
 
 def calculate_score(word_dict):
@@ -155,7 +218,7 @@ def calculate_score(word_dict):
     with click.progressbar(word_dict.items(), label='Calculating score', show_eta=False) as bar:
         for language, words in bar:
             for word, attributes in words.items():
-                attributes['score'] = attributes['exceptionalism'] * attributes['occurrences']  # calculate score
+                attributes['score'] = 0.5 * attributes['exceptionalism'] + 0.5 * attributes['frequency']
 
 
 def combine_false_friends(word_dict):
@@ -176,7 +239,6 @@ def combine_false_friends(word_dict):
                     continue
                 else:
                     for intersection in set(words1).intersection(set(words2)):
-                        # TODO: more dynamic solution: higher_exceptionalism = max([words1, words2], key=...)
                         if words1[intersection]['exceptionalism'] > words2[intersection]['exceptionalism']:
                             words1[intersection]['occurrences'] += words2[intersection]['occurrences']
                             del words2[intersection]
@@ -198,6 +260,7 @@ def create_final_word_list(word_dict):
             for word, attributes in words.items():
                 final_word_list.append(Word(term=word,
                                             occurrences=attributes['occurrences'],
+                                            frequency=attributes['frequency'],
                                             exceptionalism=attributes['exceptionalism'],
                                             language=language,
                                             score=attributes['score']))
@@ -218,6 +281,14 @@ def create_final_number_list(number_dict):
             final_number_list.append(Number(number, occurrences))
     final_number_list.sort(key=lambda x: x.occurrences, reverse=True)
     return final_number_list
+
+
+def ddint():
+    return defaultdict(int)
+
+
+def dd():
+    return defaultdict(ddint)
 
 
 class ExpressionExtractor:
@@ -276,7 +347,8 @@ class ExpressionExtractor:
         Sets the final word list (list ob Word objects) as self.final_word_list.
         :return:
         """
-        extracted_words = defaultdict(lambda: defaultdict(lambda: defaultdict(int)))
+
+        extracted_words = defaultdict(dd)
         extracted_numbers = defaultdict(int)
 
         def update_word_dict(words, language):
@@ -310,11 +382,20 @@ class ExpressionExtractor:
                 filtered_words, filtered_numbers = separate_words_and_numbers(filtered_strings)
                 if language_code == 'de':
                     filtered_words = lemmatize_words(filtered_words)
+                    filtered_words = remove_stopwords(" ".join(filtered_words), language_code)
                 update_number_dict(filtered_numbers)
                 update_word_dict(filtered_words, language_code)
 
+        pickle.dump(extracted_words, open('data/filtered_words.pkl', "wb"))
+        pickle.dump(extracted_numbers, open('data/filtered_numbers.pkl', "wb"))
+
+        # extracted_words = pickle.load(open('data/filtered_words.pkl', 'rb'))
+        # extracted_numbers = pickle.load(open('data/filtered_numbers.pkl', 'rb'))
+
         log.debug("Calculating exceptionalism of words ...")
         calculate_exceptionalism(extracted_words)
+        log.debug("Calculating frequency of words ...")
+        calculate_frequency(extracted_words)
         log.debug("Combining False Friends ...")
         combine_false_friends(extracted_words)
         log.debug("Calculating score ...")
@@ -366,18 +447,3 @@ class ExpressionExtractor:
                 f.write(output)
 
         log.info("Successfully written to file {}".format(file))
-
-
-# test_texts = ["Nach aktuellen, auf DNA-Vergleichen beruhenden Verwandtschaftsanalysen sind diese traditionell "
-#               "ausgehaltenen Gattungsgruppen ebenfalls keine geschlossenen Abstammungsgemeinschaften. Stattdessen "
-#               "verteilen sich die „Füchse“ auf fast drei Kladen: eine Graufuchs-Klade, eine Rotfuchs-Klade und eine Klade "
-#               "mit ausschließlich südamerikanischen Wildhunden.",
-#               "Twelve species belong to the monophyletic group of Vulpes genus of true foxes. Approximately another "
-#               "25 current or extinct species are always or sometimes called foxes; these fast foxes are either part of the "
-#               "paraphyletic group of the South American foxes, or of the outlying group, which consists of bat-eared "
-#               "fox, gray fox, and island fox.",
-#               "Particularité de la langue française, son développement et sa codification ont été en partie l’œuvre de "
-#               "groupes intellectuels, comme la Pléiade, ou d’institutions, comme l’Académie française."]
-# extractor = WordExtractor(test_texts, 'TEST_CASE')
-# extractor.extract_words()
-# extractor.print_words()

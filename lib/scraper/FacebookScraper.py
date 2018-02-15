@@ -39,7 +39,6 @@ class FacebookScraper:
             access_token=constants['facebook_access_token'],
             version="2.5")
         self.is_public_page = self.check_for_public_page()
-        self.driver = webdriver.PhantomJS('/usr/local/bin/phantomjs')
 
         if not numeric_id and self.is_public_page:
             self.numeric_id = self.get_numeric_id()
