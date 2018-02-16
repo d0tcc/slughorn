@@ -170,7 +170,8 @@ class FacebookScraper:
 
         log.info("Writing Facebook posts to file")
         if pickled:
-            pickle.dump(self.posts, open(file, "wb"))
+            with open(file, "wb") as f:
+                pickle.dump(self.posts, f)
         else:
             output = ''
             for post in self.posts:

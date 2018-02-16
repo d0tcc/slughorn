@@ -104,7 +104,8 @@ class TwitterScraper:
 
         log.info("Writing Tweets to file")
         if pickled:
-            pickle.dump(self.tweets, open(file, "wb"))
+            with open(file, "wb") as f:
+                pickle.dump(self.tweets, f)
         else:
             output = ''
             for post in self.tweets:
