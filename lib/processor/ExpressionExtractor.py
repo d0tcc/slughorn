@@ -48,7 +48,7 @@ def clean_text(text):
     :param text: Text to be cleaned
     :return: Cleaned text
     """
-    cleaned_text = re.sub(URL_REGEX, '', text, flags=re.MULTILINE)  # remove URLs
+    cleaned_text = URL_REGEX.sub('', text)  # remove URLs
     ugly_characters = ['-', '_', '+', '>', '<', '*', '/', ]
     for character in ugly_characters:
         cleaned_text = cleaned_text.replace(character, ' ')
@@ -76,7 +76,7 @@ def remove_stopwords(text, language_code):
     stop_words.update(['``', "''"])  # add double quotes because of weird facebook encoding
     additional_stopwords = ADDITIONAL_STOPWORDS.get(language_name, [])
     stop_words.update(additional_stopwords)
-    text = clean_text(text)
+    #text = clean_text(text)
     words = word_tokenize(text, language=language_name)
     filtered_strings = [word.lower() for word in words if word.lower() not in stop_words and len(word) > 2]
     return filtered_strings
@@ -99,17 +99,17 @@ def separate_words_and_numbers(strings):
     return filtered_words, filtered_numbers
 
 
-def lemmatize_words(word_list):
+def lemmatize_words(text):
     """
     Lemmatizes german words, i.e. finds the base form ("Kühe" --> "Kuh", "gingen" --> "gehen")
     
     Uses a self trained german classifier to tag the components of a sentence into the categories 
     Nouns, Adverbs, Adjectives and Verbs
     
-    :param word_list: List of words
+    :param text: Text
     :return: list of lemmatized words
     """
-
+    word_list = text.split()
     tagged_words = tagger.tag(word_list)
 
     base_words = []
@@ -375,14 +375,17 @@ class ExpressionExtractor:
                 extracted_numbers[number] += 1
 
         log.debug("Filtering posts ...")
-        with click.progressbar(self.texts, label='Filtering {} posts'.format(len(self.texts)), show_eta=False) as bar:
+        with click.progressbar(self.texts, label='Filtering {} posts'.format(len(self.texts)), show_eta=True) as bar:
             for text in bar:
                 language_code = detect_language(text)
-                filtered_strings = remove_stopwords(text, language_code)
-                filtered_words, filtered_numbers = separate_words_and_numbers(filtered_strings)
+                cleaned_text = clean_text(text)
                 if language_code == 'de':
-                    filtered_words = lemmatize_words(filtered_words)
-                    filtered_words = remove_stopwords(" ".join(filtered_words), language_code)
+                    filtered_words = lemmatize_words(cleaned_text)
+                    cleaned_text = " ".join(filtered_words)
+                    #filtered_words = remove_stopwords(" ".join(filtered_words), language_code)
+                filtered_strings = remove_stopwords(cleaned_text, language_code)
+                filtered_words, filtered_numbers = separate_words_and_numbers(filtered_strings)
+
                 update_number_dict(filtered_numbers)
                 update_word_dict(filtered_words, language_code)
 
@@ -405,7 +408,6 @@ class ExpressionExtractor:
         final_number_list = create_final_number_list(extracted_numbers)
         self.final_expressions = {'words': final_word_list, 'numbers': final_number_list}
         log.info("Finished extraction of words and numbers!")
-
 
     def print_expressions(self):
         """
