@@ -7,16 +7,20 @@
 *.iml
 out
 gen
-
-scraper/constants.py
-*.pkl
+pycharm_runner.py
+FacebookCookies.pkl
+lib/scraper/constants.py
 ghostdriver.log
 
-data/facebook/*.txt
-data/twitter/*.txt
+
+data/*/*.txt
+data/*/*.pkl
+!.gitkeep
 
 logs/logfile.log
 
 *.rdb
 
 slughorn.egg-info
+dist
+build
