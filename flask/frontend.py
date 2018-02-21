@@ -1,12 +1,14 @@
-import redis
-import threading
-from flask import Flask, render_template, flash, request, redirect, url_for, make_response
-from markupsafe import escape
-from forms import TwitterScrapeForm
-from config import BaseConfig
-from scraper import TwitterScraper
 import logging
+import threading
 from logging import Formatter, FileHandler
+
+import redis
+from config import BaseConfig
+from flask import Flask, render_template, flash, request, redirect, make_response
+from markupsafe import escape
+from scraper import TwitterScraper
+
+from flask.forms import TwitterScrapeForm
 
 r = redis.StrictRedis(host='localhost', port=6379, db=0)
 
