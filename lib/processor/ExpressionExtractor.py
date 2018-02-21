@@ -206,7 +206,7 @@ def calculate_frequency(word_dict):
             attributes['frequency'] /= highest_frequency
 
 
-def calculate_score(word_dict):
+def calculate_score(word_dict, exceptionalism_weight):
     """
     Calculates the score of each word.
     The score of word is the product of its exceptionalism and its number of occurrences. A higher value means that 
@@ -215,10 +215,11 @@ def calculate_score(word_dict):
     :param word_dict: dictionary of words
     :return:
     """
+    frequency_weight = 1.0 - exceptionalism_weight
     with click.progressbar(word_dict.items(), label='Calculating score', show_eta=False) as bar:
         for language, words in bar:
             for word, attributes in words.items():
-                attributes['score'] = 0.5 * attributes['exceptionalism'] + 0.5 * attributes['frequency']
+                attributes['score'] = exceptionalism_weight * attributes['exceptionalism'] + frequency_weight * attributes['frequency']
 
 
 def combine_false_friends(word_dict):
@@ -309,7 +310,7 @@ class ExpressionExtractor:
         self.case_id = case_id
         self.final_expressions = final_expressions
 
-    def extract_words_and_numbers(self):
+    def extract_words_and_numbers(self, weight):
         """
         Starts the extraction process.
         
@@ -402,7 +403,7 @@ class ExpressionExtractor:
         log.debug("Combining False Friends ...")
         combine_false_friends(extracted_words)
         log.debug("Calculating score ...")
-        calculate_score(extracted_words)
+        calculate_score(extracted_words, weight)
 
         final_word_list = create_final_word_list(extracted_words)
         final_number_list = create_final_number_list(extracted_numbers)

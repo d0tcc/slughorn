@@ -37,10 +37,11 @@ The default output path is *slughorn/data/*.
 Usage: slughorn [OPTIONS]
 
 Options:
-  -c, --case_id TEXT            Required Case ID  [required]
+  -c, --case_id TEXT            Case ID  [required]
   -f, --facebook_username TEXT  Target's Facebook user name
   -t, --twitter_username TEXT   Target's Twitter user name without leading @
   -o, --output TEXT             Path to output directory
+  -w, --weight TEXT             Weight for the exceptionalism influencing the score (default: 0.5)
   --txt                         Save intermediate results as txt instead of
                                 pickle (results cannot be reused)
   --help                        Show this message and exit.
