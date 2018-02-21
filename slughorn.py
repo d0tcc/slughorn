@@ -81,7 +81,7 @@ def start_password_generation(word_list, output, case_id):
 
 
 @click.command()
-@click.option('-c', '--case_id', required=True, help="Required Case ID")
+@click.option('-c', '--case_id', required=True, help="Case ID")
 @click.option('-f', '--facebook_username', default='', help="Target's Facebook user name")
 @click.option('-t', '--twitter_username', default='', help="Target's Twitter user name without leading @")
 @click.option('-o', '--output', default='', help="Path to output directory")
