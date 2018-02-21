@@ -108,7 +108,7 @@ def cli(case_id, facebook_username, twitter_username, output, txt):
                     click.echo("Starting Facebook scraping for user '{}'".format(facebook_username))
                     facebook_posts = start_facebook_scraper(facebook_username, output, case_id)
                 else:
-                    with pickle.load(open(file, 'rb')) as f:
+                    with open(file, 'rb') as f:
                         facebook_posts = pickle.load(f)
                 post_list.extend(facebook_posts)
             if twitter_username:
@@ -117,7 +117,7 @@ def cli(case_id, facebook_username, twitter_username, output, txt):
                     click.echo("Starting Twitter scraping for user '{}'".format(twitter_username))
                     twitter_tweets = start_twitter_scraper(twitter_username, output, case_id)
                 else:
-                    with pickle.load(open(file, 'rb')) as f:
+                    with open(file, 'rb') as f:
                         twitter_tweets = pickle.load(f)
                 post_list.extend(twitter_tweets)
 
@@ -127,7 +127,7 @@ def cli(case_id, facebook_username, twitter_username, output, txt):
                 click.echo("No posts found. Please try again ...")
 
         else:
-            with pickle.load(open(file, 'rb')) as f:
+            with open(file, 'rb') as f:
                 expression_list = pickle.load(f)
 
         if len(expression_list) > 0:

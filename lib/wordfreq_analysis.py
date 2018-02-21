@@ -7,9 +7,11 @@ import pickle
 from lib.processor.ExpressionObjects import Word
 
 CASE_ID = ""
+FILE_NAME = ""
 # words = wordfreq.random_words(lang='de', wordlist='large', nwords=100000, bits_per_word=12).split()
-expressions = pickle.load(open('/Users/ju/PycharmProjects/slughorn/data/{}/expressions_2018-02-13_11-43-53.pkl'.format(CASE_ID), 'rb'))
-words = [word.term for word in expressions['words']]
+expressions = pickle.load(open('/Users/ju/PycharmProjects/slughorn/data/{}/{}.pkl'.format(CASE_ID, FILE_NAME), 'rb'))
+words = expressions['words']
+#words = [word.term for word in expressions['words']]
 # print(len(words))
 
 
@@ -63,9 +65,50 @@ def get_specific_zipf_word(words, zipf):
             found_words.append((word, value))
     return found_words
 
+
+def evaluate_weights(words):
+    frequencies = [word.frequency for word in words]
+    exceptionalisms = [word.exceptionalism for word in words]
+    scores = [word.score for word in words]
+
+    plt.subplot(3, 1, 1)
+    plt.hist(frequencies, bins=np.arange(min(frequencies), max(frequencies) + 1, step=0.01), facecolor='green', edgecolor='black',
+             linewidth=0.8)
+
+    plt.xlabel('Häufigkeiten')
+    plt.ylabel('Anzahl der Wörter')
+    plt.title('Histogramme der Häufigkeitsverteilung')
+    plt.axis([0, 1, 0, 10])
+    plt.grid(True)
+
+
+    plt.subplot(3, 1, 2)
+    plt.hist(exceptionalisms, bins=np.arange(min(exceptionalisms), max(exceptionalisms) + 1, step=0.01), facecolor='green',
+             edgecolor='black',
+             linewidth=0.8)
+
+    plt.xlabel('Außergewöhnlichkeit')
+    plt.ylabel('Anzahl der Wörter')
+    plt.axis([0, 1, 0, 10])
+    plt.grid(True)
+
+
+    plt.subplot(3, 1, 3)
+    plt.hist(scores, bins=np.arange(min(scores), max(scores) + 1, step=0.01), facecolor='green',
+             edgecolor='black',
+             linewidth=0.8)
+
+    plt.xlabel('Score')
+    plt.ylabel('Anzahl der Wörter')
+    plt.axis([0, 1, 0, 30])
+    plt.grid(True)
+
+    plt.show()
+
+evaluate_weights(words)
 # show_zipf_plot(words)
 # show_frequency_plot(words)
-show_feature_scaled_plot(words)
+#show_feature_scaled_plot(words)
 # for i in range(10):
 #     print("ZIPF {}".format(i))
 #     print(get_specific_zipf_word(words, i))

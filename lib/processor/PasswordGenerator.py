@@ -52,7 +52,8 @@ class PasswordGenerator:
 
         log.info("Writing generated passwords to file")
         if pickled:
-            pickle.dump(self.final_passwords, open(file, "wb"))
+            with open(file, "wb") as f:
+                pickle.dump(self.final_passwords, f)
         else:
             output = ''
             for word in self.final_passwords:

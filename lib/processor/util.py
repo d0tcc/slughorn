@@ -1,6 +1,4 @@
-"""
-
-"""
+import re
 
 
 """
@@ -10,11 +8,16 @@ Based on the work of Diego Perini (https://gist.github.com/dperini/729294)
 (MIT License)
 
 Python port by github user adamrofer
+
+Changes: 
+- made protocol identifier optional
+- allow multiple dashes in host and domain name, as initially suggested by Diego Perini
+- possible change: make host name optional to detect orf.at (error prone)
 """
-URL_REGEX = """
-    u"^"
+URL_REGEX = re.compile(
+    u""
     # protocol identifier
-    u"(?:(?:https?|ftp)://)"
+    u"(?:(?:https?|ftp)://)?"
     # user:pass authentication
     u"(?:\S+(?::\S*)?@)?"
     u"(?:"
@@ -33,9 +36,9 @@ URL_REGEX = """
     u"(?:\.(?:[1-9]\d?|1\d\d|2[0-4]\d|25[0-4]))"
     u"|"
     # host name
-    u"(?:(?:[a-z\u00a1-\uffff0-9]-?)*[a-z\u00a1-\uffff0-9]+)"
+    u"(?:(?:[a-z\u00a1-\uffff0-9]-*)*[a-z\u00a1-\uffff0-9]+)"
     # domain name
-    u"(?:\.(?:[a-z\u00a1-\uffff0-9]-?)*[a-z\u00a1-\uffff0-9]+)*"
+    u"(?:\.(?:[a-z\u00a1-\uffff0-9]-*)*[a-z\u00a1-\uffff0-9]+)*"
     # TLD identifier
     u"(?:\.(?:[a-z\u00a1-\uffff]{2,}))"
     u")"
@@ -43,8 +46,8 @@ URL_REGEX = """
     u"(?::\d{2,5})?"
     # resource path
     u"(?:/\S*)?"
-    u"$"
-    """
+    u""
+    , re.UNICODE)
 
 """
 Valid unicodes in decimal including space, digits and latin letters
