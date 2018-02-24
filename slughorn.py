@@ -67,9 +67,9 @@ def start_twitter_scraper(user_name, output, case_id):
     return twitter_scraper.tweets
 
 
-def start_processing(post_list, output, case_id, pickled, weight):
+def start_processing(post_list, language, output, case_id, pickled, weight):
     weight = float(weight)
-    extractor = ExpressionExtractor.ExpressionExtractor(post_list, case_id)
+    extractor = ExpressionExtractor.ExpressionExtractor(post_list, case_id, language)
     extractor.extract_words_and_numbers(weight)
     extractor.write_to_file(directory=output, pickled=pickled)
     return extractor.final_expressions
@@ -95,10 +95,11 @@ def validate_weight(ctx, param, value):
 @click.option('-c', '--case_id', required=True, help="Case ID")
 @click.option('-f', '--facebook_username', default='', help="Target's Facebook user name")
 @click.option('-t', '--twitter_username', default='', help="Target's Twitter user name without leading @")
+@click.option('-l', '--language', default='de', help="Expected language of postings, if detection fails (default: de)")
 @click.option('-o', '--output', default='', help="Path to output directory")
 @click.option('-w', '--weight', callback=validate_weight, default='0.5', help="Weight for the exceptionalism influencing the score (default: 0.5)")
 @click.option('--txt', is_flag=True, help="Save intermediate results as txt instead of pickle (results cannot be reused)")
-def cli(case_id, facebook_username, twitter_username, output, weight, txt):
+def cli(case_id, facebook_username, twitter_username, language, output, weight, txt):
     if not (facebook_username or twitter_username):
         click.echo("Please specify at least one username. If you need help try 'slughorn --help'")
     else:
@@ -117,7 +118,7 @@ def cli(case_id, facebook_username, twitter_username, output, weight, txt):
             if facebook_username:
                 use_file, file = ask_for_existing_files('facebook', output)
                 if not use_file:
-                    click.echo("Starting Facebook scraping for user '{}'".format(facebook_username))
+                    click.echo("Starting Facebook scraping for user '{}'. Why not get a tea? This could take some time!".format(facebook_username))
                     facebook_posts = start_facebook_scraper(facebook_username, output, case_id)
                 else:
                     with open(file, 'rb') as f:
@@ -126,7 +127,7 @@ def cli(case_id, facebook_username, twitter_username, output, weight, txt):
             if twitter_username:
                 use_file, file = ask_for_existing_files('twitter', output)
                 if not use_file:
-                    click.echo("Starting Twitter scraping for user '{}'".format(twitter_username))
+                    click.echo("Starting Twitter scraping for user '{}'. Why not get a tea? This could take some time!".format(twitter_username))
                     twitter_tweets = start_twitter_scraper(twitter_username, output, case_id)
                 else:
                     with open(file, 'rb') as f:
@@ -134,7 +135,7 @@ def cli(case_id, facebook_username, twitter_username, output, weight, txt):
                 post_list.extend(twitter_tweets)
 
             if len(post_list) > 0:
-                expression_list = start_processing(post_list, output, case_id, not txt, weight)
+                expression_list = start_processing(post_list, language, output, case_id, not txt, weight)
             else:
                 click.echo("No posts found. Please try again ...")
 

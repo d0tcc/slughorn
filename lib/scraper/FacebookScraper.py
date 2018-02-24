@@ -149,7 +149,7 @@ class FacebookScraper:
             url = "/{}".format(self.user_name)
             self.graph.request(url)
         except facebook.GraphAPIError as e:
-            log.error("Error in check_for_public_page: " + str(e))
+            log.debug("Page is not public. Starting FacebookWebdriver ...")
             return False
         return True
 

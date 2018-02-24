@@ -1,6 +1,6 @@
 from lib.processor.ExpressionObjects import Word, Number
 from lib.processor.external_libraries.germalemma.germalemma import GermaLemma
-from lib.processor.util import URL_REGEX, VALID_UNICODES, ADDITIONAL_STOPWORDS
+from lib.processor.util import URL_REGEX, VALID_UNICODES, ADDITIONAL_STOPWORDS, UNSUPPORTED_LANGS
 
 import logging
 import pickle
@@ -25,7 +25,7 @@ with open('./lib/processor/models/nltk_german_classifier_data.pkl', 'rb') as f:
 lemmatizer = GermaLemma(pickle='./lib/processor/external_libraries/germalemma/data/lemmata.pkl')
 
 
-def detect_language(text):
+def detect_language(text, expected_language):
     """
     Detects the language of a text
 
@@ -38,6 +38,10 @@ def detect_language(text):
     text = text.replace('\n', ' ')
     language_label, probability = LANGUAGE_MODEL.predict(text, k=1)
     language_code = language_label[0].replace('__label__', '')
+
+    # Japanese, Korean and Chinese is not supported yet
+    if language_code in UNSUPPORTED_LANGS:
+        language_code = expected_language
     return language_code
 
 
@@ -61,7 +65,7 @@ def clean_text(text):
     return cleaned_text
 
 
-def remove_stopwords(text, language_code):
+def remove_stopwords(text, language_code, expected_language):
     """
     Removes stopwords from text
 
@@ -69,15 +73,34 @@ def remove_stopwords(text, language_code):
     together as a list
     :param text: Text the stopwords will be removed from
     :param language_code: Language Code (alpha_2, e.g. 'en') of the text
+    :param expected_language: expected language if detected language is not in pycountry
     :return: List of non-stopwords longer than 2 character
     """
-    language_name = pycountry.languages.get(alpha_2=language_code).name.lower()
-    stop_words = set(stopwords.words(language_name))
+    try:
+        if len(language_code) == 2:
+            language_name = pycountry.languages.get(alpha_2=language_code).name.lower()
+        else:
+            language_name = pycountry.languages.get(alpha_3=language_code).name.lower()
+    except KeyError:
+        log.debug("Language code {} not found in pycountry. Using {} instead.".format(language_code, expected_language))
+        language_name = pycountry.languages.get(alpha_3=expected_language).name.lower()
+
+    try:
+        stop_words = set(stopwords.words(language_name))
+    except OSError:
+        log.debug("No stopwords available for this language.")
+        stop_words = set()
+
     stop_words.update(['``', "''"])  # add double quotes because of weird facebook encoding
     additional_stopwords = ADDITIONAL_STOPWORDS.get(language_name, [])
     stop_words.update(additional_stopwords)
-    #text = clean_text(text)
-    words = word_tokenize(text, language=language_name)
+
+    try:
+        words = word_tokenize(text, language=language_name)
+    except LookupError:
+        log.debug("Tokenizer for {} not found, using english tokenizer instead.".format(language_name))
+        words = word_tokenize(text, language='english')
+
     filtered_strings = [word.lower() for word in words if word.lower() not in stop_words and len(word) > 2]
     return filtered_strings
 
@@ -123,7 +146,7 @@ def lemmatize_words(text):
     return base_words
 
 
-def calculate_exceptionalism(word_dict):
+def calculate_exceptionalism(word_dict, expected_language):
     """
     Detects how common the words are in their language using 'wordfreq'
     word_frequency returns the share the word has in the language, with 1 if there is only one word in the corpus and 0
@@ -132,32 +155,19 @@ def calculate_exceptionalism(word_dict):
     To get the exceptionalism of a word the value is substracted from 1.
         
     :param word_dict: dictionary of words
+    :param expected_language: expected language if detected language is not in wordfreq
     :return: 
     """
-    # def get_highest_frequency(word_dict):
-    #     """
-    #     Returns the highest possible frequency of any word in all given langauges.
-    #     The value is then used to Min-Max scale the frequency of words.
-    #
-    #     :param word_dict: dictionary of words
-    #     :return: The highest frequency of the most common word in all languages
-    #     """
-    #     highest_frequency = 0.0
-    #     for language in word_dict:
-    #         try:
-    #             frequency = word_frequency(top_n_list(language, wordlist='large', n=1)[0], language, wordlist='large')
-    #             if frequency > highest_frequency:
-    #                 highest_frequency = frequency
-    #         except ValueError:
-    #             pass
-    #     return highest_frequency
-
     highest_frequency = 0.0
     highest_word = ""
     with click.progressbar(word_dict.items(), label='Calculating exceptionalism', show_eta=False) as bar:
         for language, words in bar:
             for word, attributes in words.items():
-                frequency = word_frequency(word, language, wordlist='large')
+                try:
+                    frequency = word_frequency(word, language, wordlist='large')
+                except LookupError:
+                    log.debug("Language code {} not found in wordfreq. Using {} instead.".format(language, expected_language))
+                    frequency = word_frequency(word, expected_language, wordlist='large')
                 attributes['exceptionalism'] = frequency
                 # save highest frequency for Min-Max Scaling
                 if frequency > highest_frequency:
@@ -165,7 +175,7 @@ def calculate_exceptionalism(word_dict):
                     highest_word = word
 
     # perform Min-Max Scaling (dividing by the maximum value appearing)
-    click.echo("Highest Frequency (exc): {} {}".format(highest_frequency, highest_word))
+    #click.echo("Highest Frequency (exc): {} {}".format(highest_frequency, highest_word))
     for language, words in word_dict.items():
         for word, attributes in words.items():
             attributes['exceptionalism'] = 1 - (attributes['exceptionalism'] / highest_frequency)
@@ -186,7 +196,7 @@ def calculate_frequency(word_dict):
         for word, attributes in words.items():
             total_amount_words += attributes['occurrences']
 
-    click.echo("total amount of words: {}".format(total_amount_words))
+    #click.echo("total amount of words: {}".format(total_amount_words))
     highest_frequency = 0.0
     highest_word = ''
     with click.progressbar(word_dict.items(), label='Calculating frequency', show_eta=False) as bar:
@@ -200,7 +210,7 @@ def calculate_frequency(word_dict):
                     highest_word = word
 
     # perform Min-Max Scaling (dividing by the maximum value appearing)
-    click.echo("Highest Frequency: {} {}".format(highest_frequency, highest_word))
+    #click.echo("Highest Frequency: {} {}".format(highest_frequency, highest_word))
     for language, words in word_dict.items():
         for word, attributes in words.items():
             attributes['frequency'] /= highest_frequency
@@ -297,7 +307,7 @@ class ExpressionExtractor:
     A WordExtractor object represents one attempt to extract words and numbers from a list of posts.
     """
 
-    def __init__(self, texts, case_id, final_expressions={}):
+    def __init__(self, texts, case_id, expected_language, final_expressions=dict()):
         """
         Init method of the WordExtractor Class
         
@@ -308,6 +318,16 @@ class ExpressionExtractor:
         """
         self.texts = texts
         self.case_id = case_id
+
+        try:
+            pycountry.languages.get(alpha_2=expected_language)
+            self.expected_language = expected_language
+            if expected_language in UNSUPPORTED_LANGS:
+                raise KeyError
+        except KeyError:
+            log.error("{} is no valid language code. Using 'de' instead!")
+            self.expected_language = 'de'
+
         self.final_expressions = final_expressions
 
     def extract_words_and_numbers(self, weight):
@@ -378,26 +398,27 @@ class ExpressionExtractor:
         log.debug("Filtering posts ...")
         with click.progressbar(self.texts, label='Filtering {} posts'.format(len(self.texts)), show_eta=True) as bar:
             for text in bar:
-                language_code = detect_language(text)
+                language_code = detect_language(text, self.expected_language)
                 cleaned_text = clean_text(text)
+
                 if language_code == 'de':
                     filtered_words = lemmatize_words(cleaned_text)
                     cleaned_text = " ".join(filtered_words)
-                    #filtered_words = remove_stopwords(" ".join(filtered_words), language_code)
-                filtered_strings = remove_stopwords(cleaned_text, language_code)
+
+                filtered_strings = remove_stopwords(cleaned_text, language_code, self.expected_language)
                 filtered_words, filtered_numbers = separate_words_and_numbers(filtered_strings)
 
                 update_number_dict(filtered_numbers)
                 update_word_dict(filtered_words, language_code)
 
-        pickle.dump(extracted_words, open('data/filtered_words.pkl', "wb"))
-        pickle.dump(extracted_numbers, open('data/filtered_numbers.pkl', "wb"))
+        # pickle.dump(extracted_words, open('data/filtered_words.pkl', "wb"))
+        # pickle.dump(extracted_numbers, open('data/filtered_numbers.pkl', "wb"))
 
         # extracted_words = pickle.load(open('data/filtered_words.pkl', 'rb'))
         # extracted_numbers = pickle.load(open('data/filtered_numbers.pkl', 'rb'))
 
         log.debug("Calculating exceptionalism of words ...")
-        calculate_exceptionalism(extracted_words)
+        calculate_exceptionalism(extracted_words, self.expected_language)
         log.debug("Calculating frequency of words ...")
         calculate_frequency(extracted_words)
         log.debug("Combining False Friends ...")

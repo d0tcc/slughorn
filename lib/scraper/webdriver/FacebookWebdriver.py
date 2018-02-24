@@ -2,6 +2,7 @@
 #
 # based on hikaruAi's FacebookBot (https://github.com/hikaruAi/FacebookBot)
 #
+from lib.scraper.util import FB_DATE_REGEX, FB_LIKE_REGEX
 from selenium import webdriver
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.common.keys import Keys
@@ -78,10 +79,10 @@ class FacebookWebdriver(webdriver.Chrome):
             self.find_element_by_class_name("bp").click();
         try:
             self.find_element_by_name("xc_message")
-            print("Logged in")
+            log.debug("Logged in")
             return True
         except NoSuchElementException as e:
-            print("Fail to login")
+            log.error("Failed to login")
             return False
 
     def logout(self):
@@ -96,7 +97,7 @@ class FacebookWebdriver(webdriver.Chrome):
             self.get(url)
             return True
         except Exception as e:
-            print("Failed to log out ->\n", e)
+            log.error("Failed to log out ->\n", e)
             return False
 
     def get_numeric_id(self, user_name):
@@ -140,10 +141,22 @@ class FacebookWebdriver(webdriver.Chrome):
                 link = b.find_element_by_tag_name("a").get_attribute('href')
                 groups[group_name] = (mfacebookToBasic(link), notis)
             except Exception as e:
-                print("Can't get group link")
+                log.error("Can't get group link")
         return groups
 
-    def get_posts_from_profile(self, user_name, moreText="Mostrar"):
+    def get_facebook_name(self, user_name):
+        """
+        Get name of the account
+
+        :return: Name of the account
+        """
+        url = 'https://mbasic.facebook.com/{}'.format(user_name)
+        self.get(url)
+        name = self.title
+        log.debug("NAME: " + name)
+        return name
+
+    def get_posts_from_profile(self, user_name, moreText="Mehr anzeigen"):
         """
         Return a list of Posts in a profile/fanpage
 
@@ -153,6 +166,7 @@ class FacebookWebdriver(webdriver.Chrome):
         :return: List of scraped Facebook posts
         """
         """Return a list of Posts in a profile/fanpage , setup the "moreText" using your language, theres not elegant way to handle that"""
+        name = self.get_facebook_name(user_name)
         posts_list = list()
         url = 'https://mbasic.facebook.com/{}?v=timeline'.format(user_name)
         self.get(url)
@@ -161,7 +175,7 @@ class FacebookWebdriver(webdriver.Chrome):
         years = [y.text for y in years_elements]
         years.append('9999')  # append one dummy year for the extraction of the last year in the list
 
-        with click.progressbar(years, label='Scraping {} years'.format(len(years)), show_eta=False) as bar:
+        with click.progressbar(years, label='Scraping {} years'.format(len(years)), show_eta=True) as bar:
             for year in bar:
                 more_button_exists = True
                 while more_button_exists:
@@ -169,13 +183,17 @@ class FacebookWebdriver(webdriver.Chrome):
                         articles = self.find_elements_by_xpath("//div[@role='article']")
                         for article in articles:
                             try:
-                                posts_list.append(str(article.text))
+                                content = str(article.text)
+                                content = FB_DATE_REGEX.sub('', content)
+                                content = FB_LIKE_REGEX.sub('', content)
+                                content = content.replace(name, '')
+                                posts_list.append(content)
                             except Exception as e:
-                                print("ERROR: " + str(e))
+                                log.error("ERROR: " + str(e))
 
                         # press more if more button exists
                         try:
-                            show_more_link_element = self.find_element_by_partial_link_text(moreText)
+                            show_more_link_element = self.find_element_by_xpath("//div[@class='h']/a[text()='{}']".format(moreText))
                             show_more_link = show_more_link_element.get_attribute('href')
                             self.get(show_more_link)
                         except NoSuchElementException:
@@ -187,9 +205,9 @@ class FacebookWebdriver(webdriver.Chrome):
                                 self.get(year_link)
 
                     except TimeoutError as e:
-                        print("Timeout:", str(e))
+                        log.error("Timeout:", str(e))
                         time.sleep(1)
                     except BaseException as e:
-                        print("ERROR:", str(e))
+                        log.error("ERROR:", str(e))
 
         return posts_list

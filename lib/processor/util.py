@@ -86,3 +86,5 @@ ADDITIONAL_STOPWORDS = {
                 "thats", 'could', 'home', 'many', 'always', 'come', 'right', 'go', 'years', 'made', 'one', 'two',
                 'said', 'look', 'long', 'something', 'high', 'even', 'much', 'every', 'know', 'use', 'back']
 }
+
+UNSUPPORTED_LANGS = ['ja', 'ko', 'zh', 'yue']
