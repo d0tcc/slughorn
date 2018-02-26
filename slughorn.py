@@ -36,7 +36,7 @@ def check_for_constants():
                 'dedicated account for this purpose. The password has to be stored in '
                 'clear text)', type=str,
                 hide_input=True, confirmation_prompt=True)
-            with open('scraper/constants.py', 'w+') as f:
+            with open(constants_path, 'w+') as f:
                 f.write('constants = ' + str(constants))
             click.echo("Thank you! The file constants.py was created successfully. Let's continue ...")
 

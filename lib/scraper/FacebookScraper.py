@@ -1,6 +1,5 @@
 from lib.scraper.webdriver.FacebookWebdriver import *
 from lib.scraper import util
-from lib.scraper.constants import constants
 
 from datetime import datetime, timedelta
 import click_spinner
@@ -35,6 +34,7 @@ class FacebookScraper:
         """
         self.user_name = user_name
         self.case_id = case_id
+        from lib.scraper.constants import constants
         self.graph = facebook.GraphAPI(
             access_token=constants['facebook_access_token'],
             version="2.5")
@@ -129,6 +129,7 @@ class FacebookScraper:
             numeric_id = site.get('id', 0)
             return numeric_id
         else:
+            from lib.scraper.constants import constants
             facebook_driver = FacebookWebdriver('/usr/local/bin/chromedriver')
             facebook_driver.set_page_load_timeout(10)
             facebook_driver.login(constants['facebook_email'], constants['facebook_password'])
