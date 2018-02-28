@@ -1,5 +1,6 @@
 from lib.scraper import FacebookScraper, TwitterScraper
 from lib.processor import ExpressionExtractor, PasswordGenerator
+from lib.scraper.constants_factory import load_constants, reset_constants
 
 import click
 import os
@@ -23,11 +24,11 @@ ascii_slug = """
 
 
 def check_for_constants():
-    constants_path = 'lib/scraper/constants.py'
+    constants_path = 'lib/scraper/constants.pkl'
     if not os.path.isfile(constants_path):
-        if click.confirm('You need to create a constants.py file for Facebook scraping. Do you want to create it now?',
+        if click.confirm('No constants found for Facebook scraping. Do you want to create it now?',
                          default=True):
-            constants = {}
+            constants = dict()
             constants['facebook_access_token'] = click.prompt('Please enter your Facebook access token', type=str)
             constants['facebook_email'] = click.prompt('Please enter the email address for your Facebook account',
                                                        type=str)
@@ -36,9 +37,14 @@ def check_for_constants():
                 'dedicated account for this purpose. The password has to be stored in '
                 'clear text)', type=str,
                 hide_input=True, confirmation_prompt=True)
-            with open(constants_path, 'w+') as f:
-                f.write('constants = ' + str(constants))
-            click.echo("Thank you! The file constants.py was created successfully. Let's continue ...")
+            with open(constants_path, 'wb') as f:
+                pickle.dump(constants, f)
+            click.echo("Thank you! The constants were saved successfully. Let's continue ...")
+            load_constants()
+        else:
+            raise click.Abort()
+    else:
+        load_constants()
 
 
 def ask_for_existing_files(type, directory):
@@ -99,11 +105,22 @@ def validate_weight(ctx, param, value):
 @click.option('-o', '--output', default='', help="Path to output directory")
 @click.option('-w', '--weight', callback=validate_weight, default='0.5', help="Weight for the exceptionalism influencing the score (default: 0.5)")
 @click.option('--txt', is_flag=True, help="Save intermediate results as txt instead of pickle (results cannot be reused)")
-def cli(case_id, facebook_username, twitter_username, language, output, weight, txt):
+@click.option('--delete_constants', is_flag=True, help="Delete the saved constants (including credentials)")
+def cli(case_id, facebook_username, twitter_username, language, output, weight, txt, delete_constants):
+    click.echo(ascii_slug)
+
+    if delete_constants:
+        constants_path = 'lib/scraper/constants.pkl'
+        if not os.path.isfile(constants_path):
+            click.echo("There are no constants to delete!")
+        else:
+            if click.confirm('Are you sure you want to delete the saved constants?',
+                             default=False):
+                reset_constants()
+
     if not (facebook_username or twitter_username):
         click.echo("Please specify at least one username. If you need help try 'slughorn --help'")
     else:
-        click.echo(ascii_slug)
 
         if not output:
             output = 'data/{}'.format(case_id)

@@ -1,5 +1,6 @@
 from lib.scraper.webdriver.FacebookWebdriver import *
 from lib.scraper import util
+from lib.scraper.constants_factory import get_facebook_email, get_facebook_password, get_facebook_token
 
 from datetime import datetime, timedelta
 import click_spinner
@@ -34,9 +35,8 @@ class FacebookScraper:
         """
         self.user_name = user_name
         self.case_id = case_id
-        from lib.scraper.constants import constants
         self.graph = facebook.GraphAPI(
-            access_token=constants['facebook_access_token'],
+            access_token=get_facebook_token(),
             version="2.5")
         self.is_public_page = self.check_for_public_page()
 
@@ -102,17 +102,15 @@ class FacebookScraper:
                 return len(found_posts)
 
         else:
-            from lib.scraper.constants import constants
             facebook_webdriver = FacebookWebdriver('/usr/local/bin/chromedriver')
             facebook_webdriver.set_page_load_timeout(10)
-            facebook_webdriver.login(constants['facebook_email'], constants['facebook_password'])
+            facebook_webdriver.login(get_facebook_email(), get_facebook_password())
             all_posts = facebook_webdriver.get_posts_from_profile(self.user_name, moreText="Mehr anzeigen") #  moreText must be adapted to language settings
                                                                        #  of scraping profile
             self.posts = all_posts
             facebook_webdriver.close()
 
         print("Finished scraping Facebook posts for user '{}'".format(self.user_name))
-
 
     def get_numeric_id(self):
         """
@@ -129,10 +127,9 @@ class FacebookScraper:
             numeric_id = site.get('id', 0)
             return numeric_id
         else:
-            from lib.scraper.constants import constants
             facebook_driver = FacebookWebdriver('/usr/local/bin/chromedriver')
             facebook_driver.set_page_load_timeout(10)
-            facebook_driver.login(constants['facebook_email'], constants['facebook_password'])
+            facebook_driver.login(get_facebook_email(), get_facebook_password())
             numeric_id = facebook_driver.get_numeric_id(self.user_name)
             facebook_driver.close()
             return numeric_id

@@ -33,9 +33,6 @@ class TwitterScraper:
         self.join_date = self.find_join_date()
         self.tweets = []
 
-        options = webdriver.ChromeOptions()
-        options.add_argument('headless')
-
     def scrape_all(self):
         """
         Scrape all tweets.
