@@ -10,6 +10,7 @@ gen
 pycharm_runner.py
 FacebookCookies.pkl
 lib/scraper/constants.py
+lib/scraper/constants.pkl
 ghostdriver.log
 
 
