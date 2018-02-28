@@ -53,10 +53,12 @@ Options:
   -c, --case_id TEXT            Case ID  [required]
   -f, --facebook_username TEXT  Target's Facebook user name
   -t, --twitter_username TEXT   Target's Twitter user name without leading @
+  -l, --language TXT            Expected language of postings, if detection fails (default: de)
   -o, --output TEXT             Path to output directory
   -w, --weight TEXT             Weight for the exceptionalism influencing the score (default: 0.5)
   --txt                         Save intermediate results as txt instead of
                                 pickle (results cannot be reused)
+  --delete_constants            Delete the saved constants (including credentials)
   --help                        Show this message and exit.
 
 Example: slughorn -c case_0815 -f johndoe -t johnny1993
