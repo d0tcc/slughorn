@@ -1,8 +1,8 @@
-import pickle
 import os
+import pickle
 
 constants = dict()
-constants_path = 'lib/scraper/constants.pkl'
+constants_path = 'slughorn/scraper/constants.pkl'
 
 
 def load_constants():

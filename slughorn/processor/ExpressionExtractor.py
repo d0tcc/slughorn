@@ -1,28 +1,28 @@
-from lib.processor.ExpressionObjects import Word, Number
-from lib.processor.external_libraries.germalemma.germalemma import GermaLemma
-from lib.processor.util import URL_REGEX, VALID_UNICODES, ADDITIONAL_STOPWORDS, UNSUPPORTED_LANGS
-
 import logging
+import os
 import pickle
+from collections import defaultdict
 from datetime import datetime
+
 import click
 import fastText
-import os
 import pycountry
-import re
-from collections import defaultdict
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
-from wordfreq import word_frequency, top_n_list
+from wordfreq import word_frequency
+
+from slughorn.processor.ExpressionObjects import Word, Number
+from slughorn.processor.external_libraries.germalemma.germalemma import GermaLemma
+from slughorn.processor.util import URL_REGEX, VALID_UNICODES, ADDITIONAL_STOPWORDS, UNSUPPORTED_LANGS
 
 log = logging.getLogger('slughorn')
 
-LANGUAGE_MODEL = fastText.load_model('lib/processor/models/lid.176.ftz')
+LANGUAGE_MODEL = fastText.load_model('./slughorn/processor/models/lid.176.ftz')
 
-with open('./lib/processor/models/nltk_german_classifier_data.pkl', 'rb') as f:
+with open('./slughorn/processor/models/nltk_german_classifier_data.pkl', 'rb') as f:
     tagger = pickle.load(f)
 
-lemmatizer = GermaLemma(pickle='./lib/processor/external_libraries/germalemma/data/lemmata.pkl')
+lemmatizer = GermaLemma(pickle='./slughorn/processor/external_libraries/germalemma/data/lemmata.pkl')
 
 
 def detect_language(text, expected_language):

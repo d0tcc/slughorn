@@ -1,7 +1,7 @@
-from datetime import datetime
+import logging
 import os
 import pickle
-import logging
+from datetime import datetime
 
 log = logging.getLogger('slughorn')
 

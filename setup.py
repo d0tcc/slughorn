@@ -3,10 +3,10 @@ from setuptools import setup
 setup(
     name="slughorn",
     version='0.1',
-    packages=['lib', 'lib.scraper', 'lib.scraper.webdriver',
-              'lib.processor', 'lib.processor.external_libraries', 'lib.processor.external_libraries.germalemma',
-              'lib.processor.external_libraries.germalemma.data',
-              'lib.processor.external_libraries.ClassifierBasedGermanTagger'],
+    packages=['slughorn', 'slughorn.scraper', 'slughorn.scraper.webdriver',
+              'slughorn.processor', 'slughorn.processor.external_libraries', 'slughorn.processor.external_libraries.germalemma',
+              'slughorn.processor.external_libraries.germalemma.data',
+              'slughorn.processor.external_libraries.ClassifierBasedGermanTagger'],
     py_modules=['slughorn'],
     install_requires=[
         'fastText >= 0.8.22',
@@ -24,6 +24,6 @@ setup(
     dependency_links=['git+https://github.com/facebookresearch/fastText.git@master#egg=fastText-0.8.22'],
     entry_points='''
         [console_scripts]
-        slughorn=slughorn:cli
+        slughorn=slughorn.cli:cli
     ''',
 )

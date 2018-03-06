@@ -32,7 +32,6 @@ from importlib import import_module
 
 from pyphen import Pyphen
 
-
 DEFAULT_LEMMATA_PICKLE = 'data/lemmata.pickle'
 
 # valid part-of-speech prefixes

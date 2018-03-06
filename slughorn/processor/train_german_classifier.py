@@ -10,11 +10,11 @@
 # https://stackoverflow.com/a/48581326/7529379
 
 import pickle
-
-import nltk
 import random
 
-from lib.processor.external_libraries.ClassifierBasedGermanTagger.ClassifierBasedGermanTagger import \
+import nltk
+
+from slughorn.processor.external_libraries.ClassifierBasedGermanTagger.ClassifierBasedGermanTagger import \
     ClassifierBasedGermanTagger
 
 corp = nltk.corpus.ConllCorpusReader('.', 'tiger_release_aug07.corrected.16012013.conll09',

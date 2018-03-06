@@ -1,6 +1,6 @@
 import pickle
-from datetime import datetime
 import re
+from datetime import datetime
 
 # These regular expressions only work if the FacebookScraper's profile is set to german
 FB_DATE_REGEX = re.compile(u'^(\d){1,2}\. \w*( (\d){4})? um (\d){2}:(\d){2} .*$', re.UNICODE | re.MULTILINE)

@@ -1,12 +1,13 @@
 # coding: utf-8
-from lib.scraper import util
+import logging
+import math
+import time
+from datetime import timedelta
 
 from selenium import webdriver
 from selenium.common.exceptions import NoSuchElementException
-import time
-import math
-import logging
-from datetime import timedelta
+
+from slughorn.scraper import util
 
 log = logging.getLogger('slughorn')
 

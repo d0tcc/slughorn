@@ -1,12 +1,13 @@
-from lib.scraper.webdriver.TwitterWebdriver import *
-
+import logging
+import os
+import pickle
 from datetime import datetime
+
+import click_spinner
 import requests
 from bs4 import BeautifulSoup
-import os
-import click_spinner
-import pickle
-import logging
+
+from slughorn.scraper.webdriver.TwitterWebdriver import *
 
 log = logging.getLogger('slughorn')
 

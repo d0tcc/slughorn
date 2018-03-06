@@ -1,8 +1,9 @@
 # -*- coding: utf-8
 from __future__ import division
+
 import codecs
-from random import shuffle
 from collections import defaultdict
+from random import shuffle
 
 try:
     from pattern.de import singularize, conjugate, predicative
@@ -12,7 +13,7 @@ except ImportError:
     print("NOT using pattern.de")
     PATTERNLIB = False
 
-from lib.processor.external_libraries.germalemma.germalemma import GermaLemma, VALID_POS_PREFIXES
+from slughorn.processor.external_libraries.germalemma.germalemma import GermaLemma, VALID_POS_PREFIXES
 
 
 def load_tokens_from_tiger(corpus_file):
