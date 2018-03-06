@@ -9,7 +9,8 @@ from slughorn.scraper import FacebookScraper, TwitterScraper
 from slughorn.scraper import constants_factory
 from slughorn.scraper.constants_factory import load_constants, reset_constants
 
-logging.config.fileConfig('logs/logging.conf')
+here = os.path.dirname(__file__)
+logging.config.fileConfig(os.path.join(here, 'logging.conf'))
 log = logging.getLogger(__name__)
 
 

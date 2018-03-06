@@ -17,12 +17,14 @@ from slughorn.processor.util import URL_REGEX, VALID_UNICODES, ADDITIONAL_STOPWO
 
 log = logging.getLogger('slughorn')
 
-LANGUAGE_MODEL = fastText.load_model('./slughorn/processor/models/lid.176.ftz')
+here = os.path.dirname(__file__)
 
-with open('./slughorn/processor/models/nltk_german_classifier_data.pkl', 'rb') as f:
+LANGUAGE_MODEL = fastText.load_model(os.path.join(here, 'models', 'lid.176.ftz'))
+
+with open(os.path.join(here, 'models', 'nltk_german_classifier_data.pkl'), 'rb') as f:
     tagger = pickle.load(f)
 
-lemmatizer = GermaLemma(pickle='./slughorn/processor/external_libraries/germalemma/data/lemmata.pkl')
+lemmatizer = GermaLemma(pickle=os.path.join(here, 'external_libraries', 'germalemma', 'data', 'lemmata.pkl'))
 
 
 def detect_language(text, expected_language):
