@@ -7,6 +7,7 @@ setup(
               'slughorn.processor', 'slughorn.processor.external_libraries', 'slughorn.processor.external_libraries.germalemma',
               'slughorn.processor.external_libraries.germalemma.data',
               'slughorn.processor.external_libraries.ClassifierBasedGermanTagger'],
+    package_data={'slughorn.processor': ['models/lid.176.ftz', 'models/nltk_german_classifier_data.pkl']},
     py_modules=['slughorn'],
     install_requires=[
         'fastText >= 0.8.22',
