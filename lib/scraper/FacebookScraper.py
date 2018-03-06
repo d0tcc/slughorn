@@ -14,6 +14,7 @@ log = logging.getLogger('slughorn')
 
 #r = redis.StrictRedis(host='localhost', port=6379, db=0)
 
+
 class FacebookScraper:
     """
     A FacebookScraper object represents one attempt to retrieve facebook posts of a user.

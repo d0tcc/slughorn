@@ -17,7 +17,7 @@ from wordfreq import word_frequency, top_n_list
 
 log = logging.getLogger('slughorn')
 
-LANGUAGE_MODEL = fastText.load_model('lib/processor/models/lid.176.ftz')
+LANGUAGE_MODEL = fastText.load_model('./lib/processor/models/lid.176.ftz')
 
 with open('./lib/processor/models/nltk_german_classifier_data.pkl', 'rb') as f:
     tagger = pickle.load(f)
