@@ -15,7 +15,7 @@ log = logging.getLogger(__name__)
 
 
 def check_for_constants():
-    constants_path = 'slughorn/scraper/constants.pkl'
+    constants_path = os.path.join(here, 'scraper', 'constants.pkl')
     if not os.path.isfile(constants_path):
         if click.confirm('No constants found for Facebook scraping. Do you want to create it now?',
                          default=True):
