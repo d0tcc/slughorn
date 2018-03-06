@@ -1,18 +1,16 @@
-from lib.scraper.webdriver.FacebookWebdriver import *
-from lib.scraper import util
-from lib.scraper.constants_factory import get_facebook_email, get_facebook_password, get_facebook_token
-
+import logging
+import os
+import pickle
 from datetime import datetime, timedelta
+
 import click_spinner
 import facebook
-import os
-#import redis
-import pickle
-import logging
+
+from slughorn.scraper import util
+from slughorn.scraper.constants_factory import get_facebook_email, get_facebook_password, get_facebook_token
+from slughorn.scraper.webdriver.FacebookWebdriver import *
 
 log = logging.getLogger('slughorn')
-
-#r = redis.StrictRedis(host='localhost', port=6379, db=0)
 
 
 class FacebookScraper:

@@ -23,7 +23,9 @@ Tag German text.
 """
 
 import re
+
 from nltk.tag.sequential import ClassifierBasedTagger
+
 
 class ClassifierBasedGermanTagger(ClassifierBasedTagger):
     """A classifier based German part-of-speech tagger. It has an accuracy of

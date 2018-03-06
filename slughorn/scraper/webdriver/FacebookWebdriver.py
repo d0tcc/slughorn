@@ -2,14 +2,16 @@
 #
 # based on hikaruAi's FacebookBot (https://github.com/hikaruAi/FacebookBot)
 #
-from lib.scraper.util import FB_DATE_REGEX, FB_LIKE_REGEX
+import logging
+import re
+import time
+
+import click
 from selenium import webdriver
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.common.keys import Keys
-import time
-import click
-import re
-import logging
+
+from slughorn.scraper.util import FB_DATE_REGEX, FB_LIKE_REGEX
 
 log = logging.getLogger('slughorn')
 

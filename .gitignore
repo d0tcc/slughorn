@@ -9,13 +9,13 @@ out
 gen
 pycharm_runner.py
 FacebookCookies.pkl
-lib/scraper/constants.py
-lib/scraper/constants.pkl
+slughorn/scraper/constants.py
+slughorn/scraper/constants.pkl
 ghostdriver.log
 
 
-data/*/*.txt
-data/*/*.pkl
+data/**/*.txt
+data/**/*.pkl
 !.gitkeep
 
 logs/logfile.log
