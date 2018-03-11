@@ -67,7 +67,7 @@ class TwitterScraper:
         from_date = util.format_date(from_date)
         to_date = util.format_date(to_date)
 
-        twitter_spider = TwitterSpider(user_name=self.user_name, from_date=from_date, to_date=to_date, case_id=self.case_id)
+        twitter_spider = TwitterSpider(user_name=self.user_name, from_date=from_date, to_date=to_date)
         tweets = twitter_spider.get_tweets_from_profile()
         self.tweets = tweets
 

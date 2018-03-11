@@ -11,8 +11,8 @@ log = logging.getLogger('slughorn')
 
 SLEEP_TIME = 1
 
-
 def sanitize_text(text):
+    text = text.strip(' \t\n\r')
     text = text.replace(' @ ', '@').replace('@ ', '@').replace(' # ', '#').replace('# ', '#')  # handle twitter specific characters
     text = text.replace(' . ', '. ').replace('    ', ' ').replace('   ', ' ').replace('  ', ' ')  # handle punctuations and spaces
     text = text.replace('http:// ', 'http://').replace('https:// ', 'https://')  # handle URIs
@@ -55,6 +55,7 @@ class TwitterSpider:
         return data
 
     def parse(self, data):
+
         items_html = data['items_html']
         items_html = items_html.strip().encode('utf8')
 
@@ -65,7 +66,7 @@ class TwitterSpider:
 
             tweet_items = root.xpath('//li[@data-item-type="tweet"]/div')
             for tweet_item in tweet_items:
-                tweet_text_elements = tweet_item.xpath('.//div[@class="js-tweet-text-container"]/p//text()')
+                tweet_text_elements = tweet_item.xpath('.//div[@class="js-tweet-text-container"]/p/text()')
                 tweet_text = " ".join(tweet_text_elements)
                 tweet_text = sanitize_text(tweet_text)
                 if tweet_text:
