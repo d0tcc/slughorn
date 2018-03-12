@@ -9,6 +9,7 @@ setup(
                   'slughorn': ['logging.conf']},
     py_modules=['slughorn'],
     install_requires=[
+        'lxml >= 4.1.1',
         'fake-useragent >= 0.1.10',
         'fastText >= 0.8.22',
         'click >= 6.7',
