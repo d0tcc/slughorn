@@ -8,10 +8,9 @@ import requests
 from bs4 import BeautifulSoup
 
 from slughorn.scraper.webdriver.TwitterWebdriver import *
+from slughorn.scraper.webspider.TwitterSpider import TwitterSpider
 
 log = logging.getLogger('slughorn')
-
-#r = redis.StrictRedis(host='localhost', port=6379, db=0)
 
 class TwitterScraper:
     """
@@ -60,11 +59,17 @@ class TwitterScraper:
         :param to_date: end date of time frame (tweets from this day are included)
         :return: Number of scraped tweets
         """
-        twitter_webdriver = TwitterWebdriver('/usr/local/bin/chromedriver')
-        twitter_webdriver.set_page_load_timeout(10)
-        found_tweets = twitter_webdriver.get_tweets_from_profile(self.user_name, from_date, to_date)
-        self.tweets = found_tweets
-        twitter_webdriver.close()
+        # twitter_webdriver = TwitterWebdriver('/usr/local/bin/chromedriver')
+        # twitter_webdriver.set_page_load_timeout(10)
+        # found_tweets = twitter_webdriver.get_tweets_from_profile(self.user_name, from_date, to_date)
+        # self.tweets = found_tweets
+        # twitter_webdriver.close()
+        from_date = util.format_date(from_date)
+        to_date = util.format_date(to_date)
+
+        twitter_spider = TwitterSpider(user_name=self.user_name, from_date=from_date, to_date=to_date)
+        tweets = twitter_spider.get_tweets_from_profile()
+        self.tweets = tweets
 
     def find_join_date(self):
         """

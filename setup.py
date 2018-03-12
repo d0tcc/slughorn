@@ -1,16 +1,15 @@
-from setuptools import setup
+from setuptools import setup, find_packages
 
 setup(
     name="slughorn",
     version='0.1',
-    packages=['slughorn', 'slughorn.scraper', 'slughorn.scraper.webdriver',
-              'slughorn.processor', 'slughorn.processor.external_libraries', 'slughorn.processor.external_libraries.germalemma',
-              'slughorn.processor.external_libraries.ClassifierBasedGermanTagger'],
+    packages=find_packages(),
     package_data={'slughorn.processor': ['models/lid.176.ftz', 'models/nltk_german_classifier_data.pkl'],
                   'slughorn.processor.external_libraries.germalemma': ['data/lemmata.pkl'],
                   'slughorn': ['logging.conf']},
     py_modules=['slughorn'],
     install_requires=[
+        'fake-useragent >= 0.1.10',
         'fastText >= 0.8.22',
         'click >= 6.7',
         'beautifulsoup4 >= 4.6.0',
