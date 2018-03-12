@@ -39,6 +39,8 @@ def check_for_constants():
 
 
 def start_facebook_scraper(user_name, case_id, output=''):
+    click.echo("Starting Facebook scraping for user '{}'. Why not get a tea? This could take some time!".format(
+        user_name))
     if not output:
         output = "data/{}".format(case_id)
     check_for_constants()
@@ -49,6 +51,8 @@ def start_facebook_scraper(user_name, case_id, output=''):
 
 
 def start_twitter_scraper(user_name, case_id, output=''):
+    click.echo("Starting Twitter scraping for user '{}'. Why not get a tea? This could take some time!".format(
+        user_name))
     if not output:
         output = "data/{}".format(case_id)
     twitter_scraper = TwitterScraper.TwitterScraper(user_name=user_name, case_id=case_id)

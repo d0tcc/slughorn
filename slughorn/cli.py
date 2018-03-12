@@ -78,7 +78,6 @@ def cli(case_id, facebook_username, twitter_username, language, output, weight, 
             if facebook_username:
                 use_file, file = ask_for_existing_files('facebook', output)
                 if not use_file:
-                    click.echo("Starting Facebook scraping for user '{}'. Why not get a tea? This could take some time!".format(facebook_username))
                     facebook_posts = start_facebook_scraper(facebook_username, case_id, output)
                 else:
                     with open(file, 'rb') as f:
@@ -87,7 +86,6 @@ def cli(case_id, facebook_username, twitter_username, language, output, weight, 
             if twitter_username:
                 use_file, file = ask_for_existing_files('twitter', output)
                 if not use_file:
-                    click.echo("Starting Twitter scraping for user '{}'. Why not get a tea? This could take some time!".format(twitter_username))
                     twitter_tweets = start_twitter_scraper(twitter_username, case_id, output)
                 else:
                     with open(file, 'rb') as f:
