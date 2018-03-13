@@ -1,4 +1,4 @@
-![slughorn](slughorn.jpg "Slughorn") [![Current releases](https://img.shields.io/badge/release-v0.1-brightgreen.svg)](https://github.com/d0tcc/slughorn/releases) [![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/d0tcc/slughorn/blob/master/LICENSE) [![Python Version](https://img.shields.io/badge/Python-v3.6.4-yellow.svg)](https://docs.python.org/3) 
+![slughorn](slughorn.jpg "Slughorn") [![Current releases](https://img.shields.io/badge/release-v0.2-brightgreen.svg)](https://github.com/d0tcc/slughorn/releases) [![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/d0tcc/slughorn/blob/master/LICENSE) [![Python Version](https://img.shields.io/badge/Python-v3.6.4-yellow.svg)](https://docs.python.org/3) 
 ---
 ```
        _             _
