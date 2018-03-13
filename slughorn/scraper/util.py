@@ -17,7 +17,7 @@ def login_facebook(driver, email, password):
     loginButtonXPath = "// *[ @ id = 'u_0_2']"#"//label[@id='loginbutton']/input]"
     loginelement = driver.find_element_by_xpath(loginButtonXPath)
     loginelement.submit()
-    pickle.dump(driver.get_cookies() , open("FacebookCookies.pkl","wb"))
+    pickle.dump(driver.get_cookies(), open("FacebookCookies.pkl","wb"))
     # for cookie in pickle.load(open("FacebookCookies.pkl", "rb")):
     #     driver.add_cookie(cookie)
     # return driver
