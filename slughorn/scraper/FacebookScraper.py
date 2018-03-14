@@ -18,7 +18,7 @@ class FacebookScraper:
     A FacebookScraper object represents one attempt to retrieve facebook posts of a user.
     """
 
-    def __init__(self, user_name, case_id, numeric_id=0):
+    def __init__(self, user_name, case_id):
         """
         Init method of the FacebookScraper Class.
 
@@ -32,6 +32,7 @@ class FacebookScraper:
         :param case_id: String representation of the case number
         :param numeric_id: Numeric ID of the Facebook profile
         """
+
         self.user_name = user_name
         self.case_id = case_id
         self.graph = facebook.GraphAPI(
@@ -39,13 +40,14 @@ class FacebookScraper:
             version="2.5")
         self.is_public_page = self.check_for_public_page()
 
-        if not numeric_id and self.is_public_page:
+        if user_name.isdigit():
+            self.numeric_id = int(self.user_name)
+        elif self.is_public_page:
             self.numeric_id = self.get_numeric_id()
         else:
-            self.numeric_id = numeric_id
+            self.numeric_id = 0
 
         self.posts = []
-
 
     def scrape_all(self):
         """
@@ -58,7 +60,7 @@ class FacebookScraper:
         """
         today = datetime.now()
         first_day_of_facebook = datetime(2004, 2, 1)
-        return self.scrape_timeframe(first_day_of_facebook, today)
+        self.scrape_timeframe(first_day_of_facebook, today)
 
     def scrape_timeframe(self, from_date, to_date):
         """
@@ -98,7 +100,6 @@ class FacebookScraper:
                     found_posts.extend(posts)
 
                 self.posts.extend(found_posts)
-                return len(found_posts)
 
         else:
             facebook_webdriver = FacebookWebdriver('/usr/local/bin/chromedriver')
@@ -143,12 +144,16 @@ class FacebookScraper:
         :return: Whether the profile is public or private
         """
         try:
-            url = "/{}".format(self.user_name)
-            self.graph.request(url)
+            url = "/{}?metadata=1".format(self.user_name)
+            site = self.graph.request(url)
+            type = site['metadata']['type']
+            if type == "page":
+                return True
+            else:
+                return False
         except facebook.GraphAPIError as e:
-            log.debug("Page is not public. Starting FacebookWebdriver ...")
+            log.info("Profile does not exist.")
             return False
-        return True
 
     def write_to_file(self, directory='', pickled=True):
         """
