@@ -109,17 +109,27 @@ def cli(case_id, facebook_username, twitter_username, language, output, weight, 
 
 
 @click.command()
-@click.option('--fb_api_key', required=True, help="Key for Facebook Graph API")
-@click.option('--fb_email', required=True, help="Email address of your scraping facebook account")
-@click.option('--fb_password', required=True, help="Password of your scraping facebook account")
-def reset(fb_api_key, fb_email, fb_password):
+@click.option('--delete', is_flag=True, help="Just delete constants, ignore other parameters")
+@click.option('--fb_api_key', help="Key for Facebook Graph API")
+@click.option('--fb_email', help="Email address of your scraping facebook account")
+@click.option('--fb_password', help="Password of your scraping facebook account")
+def reset(delete, fb_api_key, fb_email, fb_password):
 
-    if not constants_present():
-        set_constants(fb_api_key, fb_email, fb_password)
-        click.echo("Constants set!")
-    else:
-        if click.confirm('Constants file found. Are you sure you want to delete the saved constants?',
-                         default=False):
+    if delete:
+        if constants_present():
             reset_constants()
+            click.echo("Constants deleted!")
+        else:
+            click.echo("No constants found!")
+    elif fb_api_key and fb_password and fb_email:
+        if not constants_present():
             set_constants(fb_api_key, fb_email, fb_password)
             click.echo("Constants set!")
+        else:
+            if click.confirm('Constants file found. Are you sure you want to delete the saved constants?',
+                             default=False):
+                reset_constants()
+                set_constants(fb_api_key, fb_email, fb_password)
+                click.echo("Constants set!")
+    else:
+        click.echo("Error: Missing options, --delete OR (--fb_api_key AND --fb_email AND --fb_password)")
