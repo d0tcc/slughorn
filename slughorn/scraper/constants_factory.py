@@ -12,6 +12,15 @@ def load_constants():
         constants = pickle.load(f)
 
 
+def set_constants(facebook_access_token, facebook_email, facebook_password):
+    global constants
+    constants['facebook_access_token'] = facebook_access_token
+    constants['facebook_email'] = facebook_email
+    constants['facebook_password'] = facebook_password
+    with open(constants_path, 'wb') as f:
+        pickle.dump(constants, f)
+
+
 def reset_constants():
     global constants
     os.remove(constants_path)
@@ -31,3 +40,10 @@ def get_facebook_email():
 def get_facebook_password():
     global constants
     return constants.get('facebook_password', '')
+
+
+def constants_present():
+    if os.path.isfile(constants_path):
+        return True
+    else:
+        return False

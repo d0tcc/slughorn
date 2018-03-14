@@ -7,7 +7,7 @@ import click
 from slughorn.processor import ExpressionExtractor, PasswordGenerator
 from slughorn.scraper import FacebookScraper, TwitterScraper
 from slughorn.scraper import constants_factory
-from slughorn.scraper.constants_factory import load_constants, reset_constants
+from slughorn.scraper.constants_factory import load_constants, reset_constants, constants_present, set_constants
 
 here = os.path.dirname(__file__)
 logging.config.fileConfig(os.path.join(here, 'logging.conf'))
@@ -15,23 +15,19 @@ log = logging.getLogger(__name__)
 
 
 def check_for_constants():
-    constants_path = os.path.join(here, 'scraper', 'constants.pkl')
-    if not os.path.isfile(constants_path):
+    if not constants_present:
         if click.confirm('No constants found for Facebook scraping. Do you want to create it now?',
                          default=True):
-            constants = dict()
-            constants['facebook_access_token'] = click.prompt('Please enter your Facebook access token', type=str)
-            constants['facebook_email'] = click.prompt('Please enter the email address for your Facebook account',
+            facebook_access_token = click.prompt('Please enter your Facebook access token', type=str)
+            facebook_email = click.prompt('Please enter the email address for your Facebook account',
                                                        type=str)
-            constants['facebook_password'] = click.prompt(
+            facebook_password = click.prompt(
                 'Please enter the password for your Facebook account (Please use a '
                 'dedicated account for this purpose. The password has to be stored in '
                 'clear text)', type=str,
                 hide_input=True, confirmation_prompt=True)
-            with open(constants_path, 'wb') as f:
-                pickle.dump(constants, f)
+            set_constants(facebook_access_token, facebook_email, facebook_password)
             click.echo("Thank you! The constants were saved successfully. Let's continue ...")
-            constants_factory.load_constants()
         else:
             raise click.Abort()
     else:

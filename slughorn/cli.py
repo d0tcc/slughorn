@@ -4,8 +4,8 @@ import pickle
 
 import click
 
-from slughorn import start_processing, start_twitter_scraper, start_facebook_scraper, start_password_generation
-from slughorn.scraper import constants_factory
+from slughorn import start_processing, start_twitter_scraper, start_facebook_scraper, start_password_generation, set_constants
+from slughorn.scraper.constants_factory import constants_present, reset_constants
 
 ascii_slug = """
         _             _                      
@@ -50,16 +50,16 @@ def validate_weight(ctx, param, value):
 @click.option('--txt', is_flag=True, help="Save intermediate results as txt instead of pickle (results cannot be reused)")
 @click.option('--delete_constants', is_flag=True, help="Delete the saved constants (including credentials)")
 def cli(case_id, facebook_username, twitter_username, language, output, weight, txt, delete_constants):
+
     click.echo(ascii_slug)
 
     if delete_constants:
-        constants_path = 'slughorn/scraper/constants.pkl'
-        if not os.path.isfile(constants_path):
+        if not constants_present():
             click.echo("There are no constants to delete!")
         else:
             if click.confirm('Are you sure you want to delete the saved constants?',
                              default=False):
-                constants_factory.reset_constants()
+                reset_constants()
 
     if not (facebook_username or twitter_username):
         click.echo("Please specify at least one username. If you need help try 'slughorn --help'")
@@ -106,3 +106,20 @@ def cli(case_id, facebook_username, twitter_username, language, output, weight, 
             click.echo("slughorn finished. Happy cracking!")
         else:
             click.echo("No words found. Please try again ...")
+
+
+@click.command()
+@click.option('--fb_api_key', required=True, help="Key for Facebook Graph API")
+@click.option('--fb_email', required=True, help="Email address of your scraping facebook account")
+@click.option('--fb_password', required=True, help="Password of your scraping facebook account")
+def reset(fb_api_key, fb_email, fb_password):
+
+    if not constants_present():
+        set_constants(fb_api_key, fb_email, fb_password)
+        click.echo("Constants set!")
+    else:
+        if click.confirm('Constants file found. Are you sure you want to delete the saved constants?',
+                         default=False):
+            reset_constants()
+            set_constants(fb_api_key, fb_email, fb_password)
+            click.echo("Constants set!")

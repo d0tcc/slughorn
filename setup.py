@@ -24,8 +24,7 @@ setup(
         'pyphen >= 0.9.4'
     ],
     dependency_links=['git+https://github.com/facebookresearch/fastText.git@master#egg=fastText-0.8.22'],
-    entry_points='''
-        [console_scripts]
-        slughorn=slughorn.cli:cli
-    ''',
+    entry_points={
+        'console_scripts': ['slughorn=slughorn.cli:cli', 'slughorn_reset=slughorn.cli:reset']
+    }
 )
