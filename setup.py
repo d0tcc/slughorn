@@ -1,4 +1,7 @@
 from setuptools import setup, find_packages
+import nltk
+nltk.download('stopwords')
+nltk.download('punkt')
 
 setup(
     name="slughorn",
