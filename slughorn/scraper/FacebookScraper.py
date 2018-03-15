@@ -148,11 +148,13 @@ class FacebookScraper:
             site = self.graph.request(url)
             type = site['metadata']['type']
             if type == "page":
+                log.debug("User {}: Public page.".format(self.user_name))
                 return True
             else:
+                log.debug("User {}: Private profile by FB ID.".format(self.user_name))
                 return False
         except facebook.GraphAPIError as e:
-            log.info("Profile does not exist.")
+            log.debug("User {}: Private profile by username.".format(self.user_name))
             return False
 
     def write_to_file(self, directory='', pickled=True):
