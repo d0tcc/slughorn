@@ -1,7 +1,8 @@
 import logging
 import os
-import pickle
 from datetime import datetime
+
+from slughorn.processor.util import BEST64_RULES
 
 log = logging.getLogger('slughorn')
 
@@ -26,12 +27,15 @@ class RuleGenerator:
         """
         Starts the rule generation process.
         """
-        for number in self.expressions['numbers']:
+        self.final_rules.extend(BEST64_RULES)
+        numbers = [number_object.number for number_object in self.expressions['numbers']] + list(range(101))
+
+        for number in numbers:
             appending_rule = "".join((["${}".format(digit) for digit in str(number)]))
             prepending_rule = "".join((["^{}".format(digit) for digit in str(number)[::-1]]))
-            for rule_function in ['', 'l', 'u', 'c', 'r']:
-                self.final_rules.append("{}{}".format(appending_rule, rule_function))
-                self.final_rules.append("{}{}".format(prepending_rule, rule_function))
+            for rule_function in ['l', 'u', 'c', 'C', 'r']:
+                self.final_rules.append("{}{}".format(rule_function, appending_rule))
+                self.final_rules.append("{}{}".format(rule_function, prepending_rule))
 
     def write_to_file(self, directory=''):
         """
@@ -49,7 +53,7 @@ class RuleGenerator:
 
         log.info("Writing generated rules to file")
         output = ''
-        for word in self.final_passwords:
+        for word in self.final_rules:
             output += str(word) + "\n"
 
         with open(file=file, mode='w+') as f:

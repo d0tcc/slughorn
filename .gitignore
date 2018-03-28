@@ -14,8 +14,7 @@ slughorn/scraper/constants.pkl
 ghostdriver.log
 
 
-data/**/*.txt
-data/**/*.pkl
+data/**/*
 !.gitkeep
 
 logs/logfile.log
