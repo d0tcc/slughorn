@@ -4,7 +4,8 @@ import pickle
 
 import click
 
-from slughorn import start_processing, start_twitter_scraper, start_facebook_scraper, start_password_generation, set_constants
+from slughorn import start_processing, start_twitter_scraper, start_facebook_scraper, start_wordlist_generation, \
+    start_rule_generation, set_constants
 from slughorn.scraper.constants_factory import constants_present, reset_constants
 
 ascii_slug = """
@@ -68,7 +69,7 @@ def cli(case_id, facebook_username, twitter_username, language, output, weight, 
         if not output:
             output = 'data/{}'.format(case_id)
 
-        expression_list = []
+        expression_dict = dict()
 
         use_file, file = ask_for_existing_files('expressions', output)
         if not use_file:
@@ -93,16 +94,17 @@ def cli(case_id, facebook_username, twitter_username, language, output, weight, 
                 post_list.extend(twitter_tweets)
 
             if len(post_list) > 0:
-                expression_list = start_processing(post_list, case_id, language, output, not txt, weight)
+                expression_dict = start_processing(post_list, case_id, language, output, not txt, weight)
             else:
                 click.echo("No posts found. Please try again ...")
 
         else:
             with open(file, 'rb') as f:
-                expression_list = pickle.load(f)
+                expression_dict = pickle.load(f)
 
-        if len(expression_list) > 0:
-            start_password_generation(expression_list, case_id, output)
+        if len(expression_dict) > 0:
+            start_wordlist_generation(expression_dict, case_id, output)
+            start_rule_generation(expression_dict, case_id, output)
             click.echo("slughorn finished. Happy cracking!")
         else:
             click.echo("No words found. Please try again ...")
