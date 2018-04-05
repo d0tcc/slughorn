@@ -6,38 +6,35 @@ from datetime import datetime
 log = logging.getLogger('slughorn')
 
 
-class PasswordGenerator:
+class WordListGenerator:
     """
-    A PasswordGenerator object represents one attempt to generate passwords from a list of extracted words.
+    A WordListGenerator object represents one attempt to generate a word list from a list of extracted words.
     """
 
-    def __init__(self, expressions, case_id, final_expressi=[]):
+    def __init__(self, expressions, case_id):
         """
-        Init method of the PasswordGenerator Class
+        Init method of the WordListGenerator Class
 
-        :param words: List of Word objects extracted for a user
+        :param expressions: Dictionary of expression objects extracted from a user
         :param case_id: String representation of the case number
-        :param final_passwords: Final password list, is empty at initialization (parameter only for testing 
-        purposes)
         """
         self.expressions = expressions
         self.case_id = case_id
-        self.final_passwords = []
+        self.final_word_list = []
 
-    def generate_passwords(self):
+    def generate_word_list(self):
         """
         Starts the password generation process.
-        DUMMY
+        
         """
-        # TODO DUMMY DUMMY DUMMY
         for word in self.expressions['words']:
-            self.final_passwords.append(word.term)
-        for number in self.expressions['numbers']:
-            self.final_passwords.append(number.number)
+            self.final_word_list.append(word.term)
+        # for number in self.expressions['numbers']:
+        #     self.final_passwords.append(number.number)
 
     def write_to_file(self, directory='', pickled=False):
         """
-        Writes generated passwords to a file.
+        Writes generated word list to a file.
 
         :param directory: Optional directory where the file will be located
         :param pickled: Whether the file should be a pickle (txt if False)
@@ -48,15 +45,15 @@ class PasswordGenerator:
         today = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
         if not os.path.exists(directory):
             os.makedirs(directory)
-        file = os.path.join(directory, 'passwords_{}.{}'.format(today, ('pkl' if pickled else 'txt')))
+        file = os.path.join(directory, 'word_list_{}.{}'.format(today, ('pkl' if pickled else 'txt')))
 
-        log.info("Writing generated passwords to file")
+        log.info("Writing generated word_list to file")
         if pickled:
             with open(file, "wb") as f:
-                pickle.dump(self.final_passwords, f)
+                pickle.dump(self.final_word_list, f)
         else:
             output = ''
-            for word in self.final_passwords:
+            for word in self.final_word_list:
                 output += str(word) + "\n"
 
             with open(file=file, mode='w+') as f:

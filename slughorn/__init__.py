@@ -4,7 +4,7 @@ import pickle
 
 import click
 
-from slughorn.processor import ExpressionExtractor, PasswordGenerator
+from slughorn.processor import ExpressionExtractor, WordListGenerator, RuleGenerator
 from slughorn.scraper import FacebookScraper, TwitterScraper
 from slughorn.scraper import constants_factory
 from slughorn.scraper.constants_factory import load_constants, reset_constants, constants_present, set_constants
@@ -79,9 +79,17 @@ def start_processing(post_list, case_id, language, output='', pickled=True, weig
     return extractor.final_expressions
 
 
-def start_password_generation(word_list, case_id, output=''):
+def start_wordlist_generation(expressions, case_id, output=''):
     if not output:
         output = "data/{}".format(case_id)
-    generator = PasswordGenerator.PasswordGenerator(word_list, case_id)
-    generator.generate_passwords()
+    generator = WordListGenerator.WordListGenerator(expressions, case_id)
+    generator.generate_word_list()
+    generator.write_to_file(directory=output)
+
+
+def start_rule_generation(expressions, case_id, output=''):
+    if not output:
+        output = "data/{}".format(case_id)
+    generator = RuleGenerator.RuleGenerator(expressions, case_id)
+    generator.generate_rules()
     generator.write_to_file(directory=output)

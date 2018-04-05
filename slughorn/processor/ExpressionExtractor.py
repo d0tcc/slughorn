@@ -309,15 +309,16 @@ class ExpressionExtractor:
     A WordExtractor object represents one attempt to extract words and numbers from a list of posts.
     """
 
-    def __init__(self, texts, case_id, expected_language, final_expressions=dict()):
+    def __init__(self, texts, case_id, expected_language, final_expressions=None):
         """
         Init method of the WordExtractor Class
         
         :param texts: List of texts from a user
         :param case_id: String representation of the case number
-        :param final_word_list: Final word list, is empty at initialization (parameter only for testing purposes)
-        :param final_number_list: Final number list, is empty at initialization (parameter only for testing purposes)
         """
+        if final_expressions is None:
+            final_expressions = dict()
+
         self.texts = texts
         self.case_id = case_id
 
