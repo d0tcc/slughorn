@@ -2,8 +2,8 @@ import os
 import pickle
 
 constants = dict()
-here = os.path.dirname(__file__)
-constants_path = os.path.join(here, 'constants.pkl')
+# here = os.path.dirname(__file__)
+constants_path = os.path.join("/", "data", 'constants.pkl')
 
 
 def load_constants():
@@ -19,6 +19,7 @@ def set_constants(facebook_access_token, facebook_email, facebook_password):
     constants['facebook_password'] = facebook_password
     with open(constants_path, 'wb') as f:
         pickle.dump(constants, f)
+    print("set constants to {}".format(constants_path))
 
 
 def reset_constants():

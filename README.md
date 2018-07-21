@@ -12,39 +12,27 @@
 ```
 
 ## Installation
-The use of a [virtual environment](https://virtualenv.pypa.io/en/stable/) is recommended.
 ```
-cd slughorn
-pip install -r requirements.txt
-python setup.py install
-```
-
-To use the scraping modules you need the Chrome Webdriver for Selenium:
-```
-sudo apt-get install libxss1 libappindicator1 libindicator7
-wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
-sudo dpkg -i google-chrome*.deb
-sudo apt-get install -f
-
-sudo apt-get install xvfb
-
-sudo apt-get install unzip
-
-wget -N http://chromedriver.storage.googleapis.com/2.36/chromedriver_linux64.zip
-unzip chromedriver_linux64.zip
-chmod +x chromedriver
-
-sudo mv -f chromedriver /usr/local/share/chromedriver
-sudo ln -s /usr/local/share/chromedriver /usr/local/bin/chromedriver
-sudo ln -s /usr/local/share/chromedriver /usr/bin/chromedriver
+docker build . -t slughorn
 ```
 
 
 
 ## Usage
+At first open a shell in you docker image:
+```bash
+docker run --mount type=bind,source="$(pwd)"/data,target=/data -it slughorn /bin/bash
+```
+
+
+Before you start slughorn for the first time you need to set credentials.
+```bash
+slughorn_set --fb_api_key YOUR_API_KEY --fb_email YOUR_FB_EMAIL --fb_password YOUR_FB_PASSWORD
+```
+
+
 At least one source (Twitter or Facebook) is required.\
 The default output path is *slughorn/data/*.
-
 
 ```
 Usage: slughorn [OPTIONS]

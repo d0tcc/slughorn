@@ -145,54 +145,53 @@ draw_password_cracking_times()
 #     print(get_specific_zipf_word(words, i))
 #
 
+def draw_password_cracking_times():
+    n = range(0, 13)
+    md5_times = [1.38681E-15, 1.3036E-13, 1.22538E-11, 1.15186E-09, 1.08275E-07, 1.01778E-05, 0.000956717, 0.089931435,
+                 8.453554925, 794.634163, 74695.61132, 7021387.464, 660010421.6]
+    md5_times = [time / 24 / 30 for time in md5_times]
+    sha_times = [4.03917E-15, 3.79682E-13, 3.56901E-11, 3.35487E-09, 3.15358E-07, 2.96436E-05, 0.002786502, 0.261931141,
+                 24.62152726, 2314.423563, 217555.8149, 20450246.6, 1922323181]
+    sha_times = [time / 24 / 30 for time in sha_times]
+    pdf_times = [1.08422E-09, 1.01917E-07, 9.58019E-06, 0.000900538, 0.084650551, 7.957151774, 747.9722667, 70309.39307,
+                 6609082.949, 6212537972, 58397856936, 5.4894E+12, 5.16003E+14]
+    pdf_times = [time / 24 / 30 for time in pdf_times]
 
-# def draw_password_cracking_times():
-#     n = range(0, 13)
-#     md5_times = [1.38681E-15, 1.3036E-13, 1.22538E-11, 1.15186E-09, 1.08275E-07, 1.01778E-05, 0.000956717, 0.089931435,
-#                  8.453554925, 794.634163, 74695.61132, 7021387.464, 660010421.6]
-#     md5_times = [time / 24 / 30 for time in md5_times]
-#     sha_times = [4.03917E-15, 3.79682E-13, 3.56901E-11, 3.35487E-09, 3.15358E-07, 2.96436E-05, 0.002786502, 0.261931141,
-#                  24.62152726, 2314.423563, 217555.8149, 20450246.6, 1922323181]
-#     sha_times = [time / 24 / 30 for time in sha_times]
-#     pdf_times = [1.08422E-09, 1.01917E-07, 9.58019E-06, 0.000900538, 0.084650551, 7.957151774, 747.9722667, 70309.39307,
-#                  6609082.949, 6212537972, 58397856936, 5.4894E+12, 5.16003E+14]
-#     pdf_times = [time / 24 / 30 for time in pdf_times]
-#
-#     f, (ax, ax2) = plt.subplots(2, 1, sharex=True)
-#     ax.plot(n, md5_times, '.r-', n, sha_times, '.b-', n, pdf_times, '.g-')
-#     ax2.plot(n, md5_times, '.r-', n, sha_times, '.b-', n, pdf_times, '.g-')
-#     ax.set_ylim(80, 300)  # outliers only
-#     ax2.set_ylim(0, 6)  # most of the data
-#
-#     # hide the spines between ax and ax2
-#     ax.spines['bottom'].set_visible(False)
-#     ax2.spines['top'].set_visible(False)
-#     ax.xaxis.tick_top()
-#     ax.tick_params(labeltop='off')  # don't put tick labels at the top
-#     ax2.xaxis.tick_bottom()
-#
-#     d = .015  # how big to make the diagonal lines in axes coordinates
-#     # arguments to pass to plot, just so we don't keep repeating them
-#     kwargs = dict(transform=ax.transAxes, color='k', clip_on=False)
-#     ax.plot((-d, +d), (-d, +d), **kwargs)  # top-left diagonal
-#     ax.plot((1 - d, 1 + d), (-d, +d), **kwargs)  # top-right diagonal
-#
-#     kwargs.update(transform=ax2.transAxes)  # switch to the bottom axes
-#     ax2.plot((-d, +d), (1 - d, 1 + d), **kwargs)  # bottom-left diagonal
-#     ax2.plot((1 - d, 1 + d), (1 - d, 1 + d), **kwargs)  # bottom-right diagonal
-#
-#     # plt.plot(n, md5_times, '.r-', n, sha_times, '.b-', n, pdf_times, '.g-')
-#     # plt.axis([0, 13, 0, 150])
-#     plt.xlabel('Passwortlänge (Anzahl der Zeichen)')
-#     plt.ylabel('Monate um alle Kombinationen zu probieren')
-#     # plt.axhline(120, color='k')
-#     # plt.axhline(12, color='k')
-#     # plt.annotate('1 Jahr', xy=(13, 12), xytext=(13.1, 10))
-#     # plt.annotate('10 Jahre', xy=(13, 120), xytext=(13.1, 118))
-#
-#     red_patch = mpatches.Patch(color='red', label='MD5')
-#     blue_patch = mpatches.Patch(color='blue', label='SHA256')
-#     green_patch = mpatches.Patch(color='green', label='PDF')
-#     plt.legend(handles=[red_patch, blue_patch, green_patch])
-#
+    f, (ax, ax2) = plt.subplots(2, 1, sharex=True)
+    ax.plot(n, md5_times, '.r-', n, sha_times, '.b-', n, pdf_times, '.g-')
+    ax2.plot(n, md5_times, '.r-', n, sha_times, '.b-', n, pdf_times, '.g-')
+    ax.set_ylim(80, 300)  # outliers only
+    ax2.set_ylim(0, 6)  # most of the data
+
+    # hide the spines between ax and ax2
+    ax.spines['bottom'].set_visible(False)
+    ax2.spines['top'].set_visible(False)
+    ax.xaxis.tick_top()
+    ax.tick_params(labeltop='off')  # don't put tick labels at the top
+    ax2.xaxis.tick_bottom()
+
+    d = .015  # how big to make the diagonal lines in axes coordinates
+    # arguments to pass to plot, just so we don't keep repeating them
+    kwargs = dict(transform=ax.transAxes, color='k', clip_on=False)
+    ax.plot((-d, +d), (-d, +d), **kwargs)  # top-left diagonal
+    ax.plot((1 - d, 1 + d), (-d, +d), **kwargs)  # top-right diagonal
+
+    kwargs.update(transform=ax2.transAxes)  # switch to the bottom axes
+    ax2.plot((-d, +d), (1 - d, 1 + d), **kwargs)  # bottom-left diagonal
+    ax2.plot((1 - d, 1 + d), (1 - d, 1 + d), **kwargs)  # bottom-right diagonal
+
+    # plt.plot(n, md5_times, '.r-', n, sha_times, '.b-', n, pdf_times, '.g-')
+    # plt.axis([0, 13, 0, 150])
+    plt.xlabel('Passwortlänge (Anzahl der Zeichen)')
+    plt.ylabel('Monate um alle Kombinationen zu probieren')
+    # plt.axhline(120, color='k')
+    # plt.axhline(12, color='k')
+    # plt.annotate('1 Jahr', xy=(13, 12), xytext=(13.1, 10))
+    # plt.annotate('10 Jahre', xy=(13, 120), xytext=(13.1, 118))
+
+    red_patch = mpatches.Patch(color='red', label='MD5')
+    blue_patch = mpatches.Patch(color='blue', label='SHA256')
+    green_patch = mpatches.Patch(color='green', label='PDF')
+    plt.legend(handles=[red_patch, blue_patch, green_patch])
+
 #     plt.show()
