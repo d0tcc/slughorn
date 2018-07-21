@@ -1,7 +1,4 @@
 from setuptools import setup, find_packages
-import nltk
-nltk.download('stopwords')
-nltk.download('punkt')
 
 setup(
     name="slughorn",
@@ -28,6 +25,6 @@ setup(
     ],
     dependency_links=['git+https://github.com/facebookresearch/fastText.git@master#egg=fastText-0.8.22'],
     entry_points={
-        'console_scripts': ['slughorn=slughorn.cli:cli', 'slughorn_reset=slughorn.cli:reset']
+        'console_scripts': ['slughorn=slughorn.cli:cli', 'slughorn_set=slughorn.cli:reset']
     }
 )

@@ -10,29 +10,32 @@
                 __/ |
                |___/
 ```
+The following setup was tested under Debian 9 in April 2018. Since the functionality is highly dependent on the 
+structure of Facebook and Twitter, there is no guarantee that slughorn automatically works in the future.
 
 ## Installation
 The use of a [virtual environment](https://virtualenv.pypa.io/en/stable/) is recommended.
-```
+```bash
+git clone https://github.com/d0tcc/slughorn.git
 cd slughorn
 pip install -r requirements.txt
 python setup.py install
 ```
 
 To use the scraping modules you need the Chrome Webdriver for Selenium:
-```
+```bash
 sudo apt-get install libxss1 libappindicator1 libindicator7
 wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
 sudo dpkg -i google-chrome*.deb
 sudo apt-get install -f
 
-sudo apt-get install xvfb
+sudo apt-get install xvfbls
 
 sudo apt-get install unzip
 
 wget -N http://chromedriver.storage.googleapis.com/2.36/chromedriver_linux64.zip
 unzip chromedriver_linux64.zip
-chmod +x chromedriver
+chmod a+x chromedriver
 
 sudo mv -f chromedriver /usr/local/share/chromedriver
 sudo ln -s /usr/local/share/chromedriver /usr/local/bin/chromedriver
@@ -42,6 +45,13 @@ sudo ln -s /usr/local/share/chromedriver /usr/bin/chromedriver
 
 
 ## Usage
+Before you start slughorn for the first time you need to set credentials.
+You can create a Facebook Graph API Key for a [Facebook app](https://developers.facebook.com/docs/facebook-login/access-tokens/).
+Please use a dummy Facebook Account created only for this purpose since the credentials will be saved in plain text.
+```bash
+slughorn_set --fb_api_key YOUR_API_KEY --fb_email YOUR_FB_EMAIL --fb_password YOUR_FB_PASSWORD
+```
+
 At least one source (Twitter or Facebook) is required.\
 The default output path is *slughorn/data/*.
 
@@ -63,3 +73,8 @@ Options:
 
 Example: slughorn -c case_0815 -f johndoe -t johnny1993
 ```
+
+This thesis was supported by a netidee scholarship.
+Diese Arbeit wurde mit einem netidee Stipendium gefördert.
+![netidee](netidee.jpg "Netidee")
+[netidee project page](https://www.netidee.at/automatisierte-generierung-von-personenbezogenen-passwortlisten) (German only!)
