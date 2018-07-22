@@ -82,7 +82,7 @@ Example: slughorn -c case_0815 -f johndoe -t johnny1993
 ---
 # English
 
-The following setup was tested under Debian 9 in April 2018. Since the functionality is highly dependent on the 
+The following setup was tested under Debian 9 in July 2018. Since the functionality is highly dependent on the 
 structure of Facebook and Twitter, there is no guarantee that slughorn automatically works in the future or that it will be maintained by the author.
 
 ## Installation
