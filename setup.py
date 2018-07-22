@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="slughorn",
-    version='0.2',
+    version='0.3',
     packages=find_packages(),
     package_data={'slughorn.processor': ['models/lid.176.ftz', 'models/nltk_german_classifier_data.pkl'],
                   'slughorn.processor.external_libraries.germalemma': ['data/lemmata.pkl'],

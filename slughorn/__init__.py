@@ -70,6 +70,9 @@ def start_twitter_scraper(user_name, case_id, output='', scrape_all=True, from_d
 
 
 def start_processing(post_list, case_id, language, output='', pickled=True, weight=0.5):
+    import nltk
+    nltk.download('stopwords')
+    nltk.download('punkt')
     if not output:
         output = "data/{}".format(case_id)
     weight = float(weight)
